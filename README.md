@@ -7,13 +7,19 @@ Clients are assumed to be mobile phones, and a Web application displays results 
 
 Requires: socket.io
 
+Run
+===
 
-Components
+Prerequisite: node.js is installed
 
-Node.js server (mento-server.js)
+# Install required package (once)
+$ npm install socket.io
 
-HTML5 Clients
+# edit questions.json
 
-control app to launch results etc (mento-control.html)
-voting app responsive design (mento.html)
+# Start server
+$ node mento-server.js
+
+Vote app, open browser and navigate to http://<server>:8080
+Control app, naviagte to http://<server>:8080/mento-coontrol.html
 
