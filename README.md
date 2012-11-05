@@ -1,4 +1,4 @@
-mento
+Mento
 =====
 
 Node.js server for quiz, and voting during Live presentations (and seminars).
@@ -15,7 +15,18 @@ Prerequisite: node.js is installed
 # Install required package (once)
 $ npm install socket.io
 
-# edit questions.json
+# Edit questions
+
+Check file questions.json
+
+An json array of questions objects
+{
+"question" : "<The questiuon to ask>",
+"options" : [ "<option-string1>", ..., "<option-string4>" ],
+"answer" : <right-option (0-4)>,
+"answers" : [<placeholder for all answers on the form: { "name": "<email>", "option": <0-4> }> ],
+}
+ 
 
 # Start server
 $ node mento-server.js
