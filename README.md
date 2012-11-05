@@ -19,14 +19,13 @@ $ npm install socket.io
 
 Check file questions.json
 
-An json array of questions objects
-{
-"question" : "<The questiuon to ask>",
-"options" : [ "<option-string1>", ..., "<option-string4>" ],
-"answer" : <right-option (0-4)>,
-"answers" : [<placeholder for all answers on the form: { "name": "<email>", "option": <0-4> }> ],
-}
- 
+An json array of questions objects, each with the following attributes:
+<pre>
+"question" : String, The questiuon to ask
+"options"  : Array of Strings, max 4 is assumed
+"answer"   : Int, The right answer as slot in the array above (0-4) 
+"answers"  : Empty array, a placeholder for the server to store answer objects
+</pre>
 
 # Start server
 $ node mento-server.js
