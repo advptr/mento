@@ -38,27 +38,37 @@ var mimeType = function(file) {
 	}
 };
 
+var log = function(rec) {
+    console.log(rec.time + ' - ' + rec.code + ' ' + rec.client + ', ' + rec.file + ', ' + rec.mime);
+};
+
 // Tiny WebServer
 var server = http.createServer(function(req, res) {
 	var path = url.parse(req.url).pathname;
 	var file = root + ((path == '/') ? homePage : path);
-	console.log(new Date().toISOString() + ' ' + req.connection.remoteAddress + ' ' + file);
+	var rec = { "time" : new Date().toISOString(), "client" : req.connection.remoteAddress, "file" : file, "mime" : null, "code" : 200, "err" : null };
+
 	fs.exists(file, function(exists) {
 		if (exists) {
-			var mime = mimeType(file);
-			res.writeHead(200, { 'Content-type': mime });
+			rec.mime = mimeType(file);
+			res.writeHead(200, { 'Content-type': rec.mime });
 			fs.readFile(file, function(err, data) {
 				if (err) {
 					res.writeHead(500, { 'Content-type': 'text/plain'});
-					res.end("500 - " + http.STATUS_CODES[500] + ', ' + err);							
+					res.end("500 - " + http.STATUS_CODES[500] + ', ' + err);
+					rec.err = err;
+					rec.code = 500;
 				} else {
 					res.end(data);
-					res.writeHead(200, { 'Content-type': mime });
+					res.writeHead(200, { 'Content-type': rec.mime });
 				}
+				log(rec);
 			});
 		} else {
 			res.writeHead(404, { 'Content-type': 'text/plain'});
-			res.end("404 - " + http.STATUS_CODES[404]);		
+			res.end("404 - " + http.STATUS_CODES[404]);
+			rec.code = 404;
+			log(rec);
 		}
 	});
 }).listen(port, function() {
