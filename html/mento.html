@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mentometer</title>
+<meta charset='utf-8'>
+
+<link href="css/bootstrap.min.css" rel="stylesheet">
+
+</head>
+
+<style>
+
+
+body {
+	padding: 10px 10px;
+	font-family: 'Open Sans', Arial, sans-serif;
+	color: rgb(56, 56, 56);
+	text-shadow: 0 1px 1px rgba(0, 0, 0, .1);
+	display: block !important;
+	height: 100%;
+	overflow-x: hidden;
+	overflow-y: auto;
+	background: rgb(215, 215, 215);
+	background: -o-radial-gradient(rgb(240, 240, 240), rgb(190, 190, 190) );
+	background: -moz-radial-gradient(rgb(240, 240, 240), rgb(190, 190, 190) );
+	background: -webkit-radial-gradient(rgb(240, 240, 240),
+		rgb(190, 190, 190) );
+	background: -webkit-gradient(radial, 50% 50%, 0, 50% 50%, 500, from(rgb(240, 240,
+		240) ), to(rgb(190, 190, 190) ) );
+	-webkit-font-smoothing: antialiased;
+}
+
+@font-face {
+	font-family: 'DigitaldreamFat';
+	src: url('font/Digital-dream/DIGITALDREAMFAT-webfont.eot');
+	src: url('font/Digital-dream/DIGITALDREAMFAT-webfont.eot?#iefix')
+		format('embedded-opentype'),
+		url('font/Digital-dream/DIGITALDREAMFAT-webfont.woff') format('woff'),
+		url('font/Digital-dream/DIGITALDREAMFAT-webfont.ttf')
+		format('truetype'),
+		url('font/Digital-dream/DIGITALDREAMFAT-webfont.svg#DigitaldreamFat')
+		format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+
+.countDown {
+	font-family: 'DigitaldreamFat';
+	position: relative;
+	margin: 0 auto;
+	text-align: center;
+	color: blue;
+}
+
+.hide {
+	display: none;
+}
+
+.box {
+	padding: 10px 10px;
+	align: top;
+	background: rgb(190, 190, 190);
+	box-sizing: border-box;
+	-o-box-sizing: border-box;
+	-moz-box-sizing: border-box;
+	-webkit-box-sizing: border-box;
+	border-radius: 10px;
+	-o-border-radius: 10px;
+	-moz-border-radius: 10px;
+	-webkit-border-radius: 10px;
+	box-shadow: 0 2px 6px rgba(0, 0, 0, .1);
+	border: 1px solid rgba(100, 100, 100, .3);
+}
+</style>
+
+<body>
+
+	<div class="text-info" style="float: right; margin: 10px 10px auto;">
+		<table>
+			<tr>
+				<td>Deltagare:</td>
+				<td id="users" class="">0</td>
+			</tr>
+			<tr>
+				<td>Din poäng:</td>
+				<td id="score">0</td>
+			</tr>
+			<tr>
+				<td colspan="2" id="countdown" style="align: center;"
+					class="countDown hide"></td>
+			</tr>
+			<tr id="num-answers" class="hide text-success">
+				<td>Svar:</td>
+				<td id="answers"></td>
+			</tr>
+		</table>
+	</div>
+	
+	<div id="welcome" class="box">
+		<h1>Var med och rösta och quiza under Cadec:en!</h1>
+		Vi kör denna HTML5 applikation för online röstning och quiz
+		under Cadec:en i år. Fyll i din mailadress nedan och var med och tävla.
+		<br/><br/>
+		<div id="login-section">
+			<div id="login" class="control-group input-append">
+				&nbsp; <input id="email" type="text" class="input-large"
+					placeholder="Din mailadress" /> <a href="#" id="submitEmail"
+					class="btn btn-primary" rel="popover">Anslut</a>
+			</div>
+		</div>
+	</div>
+
+	<div id="quiz" class="box hide">
+		<h1 id="question"></h1>
+		<div id="option">
+			<table>
+				<tr id="options">
+				</tr>
+				<tr>
+					<td id="td-progressbar">
+						<div class="progress progress-striped active" style="background: rgb(190, 190, 190);"><div id="progressbar" class="bar" style="width: 100%; max-height: 10px; "></div></div>
+					</td>
+				</tr>
+			</table>
+		</div>
+		<div id="chart" style="width: 100%;" class="hide"></div>
+	</div>
+	
+	<div id="footer">
+		<div id="footer-email" class="text-info" style="float: right;"></div>
+		<div class="muted credit">CADEC av <a href="http://www.callistaenterprise.se">Callista Enterprise AB</a> </div>
+	</div>
+
+	<!--  Scripts -->
+	<script src='js/jquery.min.js'></script>
+
+	<!-- Socket.IO-->
+	<script src="js/socket.io.min.js"></script>
+	<script src='js/wsocket.js'></script>
+
+	<script src="https://www.google.com/jsapi"></script>
+
+	<script src="js/mento.js"></script>
+	<script src="js/bootstrap.min.js"></script>
+	<script type="text/javascript">
+		var score = 0;
+
+		google.load("visualization", "1", {
+			packages : [ "corechart" ]
+		});
+		
+		$('#submitEmail').click(function() {
+			Mento.login($('#email').val(), function(ok) {
+				if (ok) {
+					$('#login').removeClass('error');
+					$('#email').attr('disabled', 'disabled');
+					$('#submitEmail').removeClass('btn-primary').addClass('btn-success').attr('disabled', 'disabled').html('Ansluten');
+					$('#login-section').popover('destroy');
+					$('#footer-email').html($('#email').val());
+				} else {
+					$('#login').addClass('error');
+					$('#submitEmail').removeClass('btn-primary').addClass('btn-error');					
+					$('#login-section').popover({ "trigger" : 'manual', "placement": 'bottom', "content" : 'Upptagen eller ogiltig email adress, kontrollera och försök igen.' ,  "title" : 'Otillåten adress' });
+					$('#login-section').popover('show');
+				}
+			});
+		});
+		
+		// use CSS to achieve smooth scrolling of progress bar
+		var setProgressTransition = function(timeout) {
+			var transition = 'width ' + timeout + 's ease-in-out';
+			$.each(['-webkit-transition', ' -moz-transition', '-ms-transition', '-o-transition', 'transition'], function(index, name) {
+				$('#progressbar').css(name, transition);					
+			});
+		};
+		
+		// starts progress
+		var startProgress = function(timeout, readyCallback) {
+			setProgressTransition(timeout);
+		    var downtimer;
+			downtimer = setInterval(function() {
+		    	timeout--;
+		    	if (timeout == -1) {
+					clearInterval(downtimer);
+					readyCallback();
+		    	} else {
+		    		$('#countdown').html(pad(timeout));
+		    	}
+		    }, 1000);
+			$('#progressbar').css('width', '0%');
+		}
+		
+		//
+		$(document).ready(function() {
+			$('#quiz').slideUp('fast');
+			$('#chart').slideUp('fast');
+			// comment out when running 
+
+			// $('#login-section').addClass('hide');
+			Mento.ready();
+			
+			//		
+			Mento.userUpdateHandler(function(data) {
+				console.log('users: ', data);
+				$('#users').html(data);
+			});
+			
+			//
+			Mento.answerUpdateHandler(function(data) {
+				console.log('answers: ', data);
+				if ($('#num-answers').hasClass('hide')) {
+					$('#num-answers').removeClass('hide');
+				}
+				$('#answers').html(data);
+			});
+
+
+			// Display question
+			Mento.openHandler(function(data) {			
+				console.log('openQuestion: ' + JSON.stringify(data));
+				$('#question').html(data.question.question + '?');
+				$('#option').slideDown(1000);
+				var tr = $('#options');
+				tr.empty();
+				$('#num-answers').addClass('hide');
+
+				$.each(data.question.options, function(index, option) {
+					var btn = $('<input>').attr('type','button').attr('value', option).attr('id', index).addClass('btn');
+
+					if (index < btnClass.length) {
+						btn.addClass(btnClass[index]);
+					}
+					
+					btn.click(function(e) {
+						e.preventDefault();
+						var answer = {};
+						answer.name = $('#email').val();
+						answer.option = parseInt(btn.attr('id'));
+						console.log(JSON.stringify(answer));
+						if (answer.option == data.question.answer) {
+							score++;
+							$('#score').html(score);
+						}
+						Mento.send('answer', answer);
+						for (var i = 0;i < data.question.options.length; i++) {
+							var id = '#' + i;
+							if (i < btnClass.length && answer.option != i) {
+								$(id).removeClass(btnClass[i]);
+							}
+							$(id).attr('disabled', 'disabled');
+						}
+						
+					});	
+					tr.append($('<td>').append(btn));
+				});
+				
+				if (!$('#welcome').hasClass('hide')) {
+					$('#welcome').addClass('hide');
+				}
+				$('#td-progressbar').attr('colspan', data.question.options.length);
+				$('#chart').fadeOut(1000);
+				$('#quiz').slideDown(1000).fadeIn(1000);
+				
+				$('#countdown').removeClass('hide');
+								
+				startProgress(data.timeout, function() {
+					Mento.send('results');
+					$('#countdown').addClass('hide');
+					tr.empty();
+					$('#progressbar').css('width', '100%');
+				});
+				
+			});
+			
+
+		});
+	</script>
+
+</body>
+</html>

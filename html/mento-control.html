@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mento Control</title>
+<meta charset='utf-8'>
+
+<link href="css/bootstrap.min.css" rel="stylesheet" >
+
+<style>
+body {
+	padding: 10px 10px;
+	font-family: 'Open Sans', Arial, sans-serif;
+	color: rgb(56, 56, 56);
+	text-shadow: 0 1px 1px rgba(0, 0, 0, .1);
+	display: block !important;
+	height: 100%;
+	overflow-x: hidden;
+	overflow-y: auto;
+	background: rgb(215, 215, 215);
+	background: -o-radial-gradient(rgb(240, 240, 240), rgb(190, 190, 190) );
+	background: -moz-radial-gradient(rgb(240, 240, 240), rgb(190, 190, 190) );
+	background: -webkit-radial-gradient(rgb(240, 240, 240),
+		rgb(190, 190, 190) );
+	background: -webkit-gradient(radial, 50% 50%, 0, 50% 50%, 500, from(rgb(240, 240,
+		240) ), to(rgb(190, 190, 190) ) );
+	-webkit-font-smoothing: antialiased;
+}
+</style>
+
+<script src='js/jquery.min.js'></script>
+<script src="js/bootstrap.min.js"></script>
+
+
+<!-- Socket.IO-->
+<script src="js/socket.io.min.js"></script>
+<script src='js/wsocket.js'></script>
+<script src="js/mento.js"></script>
+
+<script type="text/javascript">
+	$(document).ready(function() {
+		Mento.ready();
+		Mento.questions(function(data) {
+			$.each(data, function(i, q) {
+				var tr = $('<tr>');
+				tr.append($('<td>').html(i + ': ' + q.question + '? ' + JSON.stringify(q.options)));
+				var btn = $('<input>').attr('type', 'button').attr('id', i);
+				if (q.answer > -1) {
+					btn.addClass('btn-success');
+					btn.attr('value', 'Launch Quiz');
+				} else {
+					btn.addClass('btn-primary');
+					btn.attr('value', 'Launch Vote');
+				}
+				btn.addClass((q.answer > -1) ? 'btn-success' : 'btn-primary');
+				tr.append($('<td>').append(btn));
+				$('#questions').append(tr);
+				btn.click(function(e) {
+					e.preventDefault();
+					console.log('open: ', btn.attr('id'));
+					Mento.toQuestion({ "num" : parseInt(btn.attr('id')), "timeout" : parseInt($('#time').val()) });
+					btn.remove();
+				});
+			});
+		});
+		
+		$('#openWelcomePage').click(function(e) {
+			console.log('openWelcomePage');
+			e.preventDefault();
+			Mento.openWelcomePage();
+		});
+		$('#openToplistPage').click(function(e) {
+			console.log('openToplistPage');
+			e.preventDefault();
+			Mento.openToplistPage();
+		});
+
+	});
+</script>
+</head>
+
+<body>
+	<h1>Control Panel</h1>
+	<div class="control-group">
+			<input id="openWelcomePage" type="button" class="btn btn-primary" value="To Welcome Page" />
+			<input id="openToplistPage" type="button" class="btn btn-primary" value="To Toplist Page" />
+	</div>
+	<div class="text-info">Think time (s):</div> <input id="time" type="number" value="20" />
+	<br/>
+	<p class="text-info">Questions</p>
+	<table id="questions">
+	</table>
+</body>
+</html>

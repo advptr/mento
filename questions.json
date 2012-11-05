@@ -1,0 +1,7 @@
+[
+	{ "question": "No är rätt", "options": [ "Yes", "No" ], "answer": 1, "answers": [] },
+	{ "question": "Yes är rätt", "options": [ "Yes", "No" ], "answer": 0 , "answers": [] },
+	{ "question": "Vilken färg har java", "options": [ "Blå", "Röd", "Gul", "Grön" ], "answer": 0 , "answers": [] },
+	{ "question": "När postade Magnus L senaste blogginlägget", "options": [ "23/10", "24/10", "25/10" ], "answer": 1 , "answers": [] }, 
+	{ "question": "Vem vinner presidentvalet i USA", "options": [ "Romney", "Obama" ], "answer": -1 , "answers": [] }
+]
