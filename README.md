@@ -1,19 +1,39 @@
-mento
+Mento
 =====
 
 Node.js server for quiz, and voting during Live presentations (and seminars).
 
 Clients are assumed to be mobile phones, and a Web application displays results of votings etc on a big screen.
 
-Requires: socket.io
+Run
+===
 
+Prerequisite: node.js is installed
 
-Components
+# Install required package (once)
 
-Node.js server (mento-server.js)
+<code>
+$ npm install socket.io
+</code>
 
-HTML5 Clients
+# Edit questions
 
-control app to launch results etc (mento-control.html)
-voting app responsive design (mento.html)
+Check file questions.json
+
+An json array of questions objects, each with the following attributes:
+<pre>
+"question" : String, The questiuon to ask
+"options"  : Array of Strings, max 4 is assumed
+"answer"   : Int, The right answer as slot in the array above (0-4) 
+"answers"  : Empty array, a placeholder for the server to store answer objects
+</pre>
+
+# Start server
+
+<code>
+$ node mento-server.js
+</code>
+
+Vote app, open browser and navigate to http://<server>:8080
+Control app, naviagte to http://<server>:8080/mento-coontrol.html
 
