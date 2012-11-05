@@ -22,7 +22,7 @@ Check file questions.json
 
 An json array of questions objects, each with the following attributes:
 <pre>
-"question" : String, The questiuon to ask
+"question" : String, The question to ask
 "options"  : Array of Strings, max 4 is assumed
 "answer"   : Int, The right answer as slot in the array above (0-4) 
 "answers"  : Empty array, a placeholder for the server to store answer objects
