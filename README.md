@@ -27,6 +27,8 @@ An json array of questions objects, each with the following attributes:
 
 # Start server
 
+The default port is 8080
+
 <code>
 $ node mento-server.js
 </code>
