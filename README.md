@@ -34,5 +34,6 @@ $ node mento-server.js
 </code>
 
 Vote app, open browser and navigate to http://[server]:8080
+
 Control app, naviagte to http://[server]:8080/mento-coontrol.html
 
