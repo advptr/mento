@@ -62,7 +62,7 @@ var server = http.createServer(function(req, res) {
 					res.end(data);
 					res.writeHead(200, { 'Content-type': rec.mime });
 				}
-				log(rec);
+				//log(rec);
 			});
 		} else {
 			res.writeHead(404, { 'Content-type': 'text/plain'});
@@ -167,6 +167,12 @@ io.listen(server).on('connection', function (socket) {
 		clients.remove(client);
 		userUpdate();
 	});
+
+	socket.on('logout', function() {
+		console.log('logout');
+		clients.remove(client);
+		userUpdate();
+	    });
 
 	socket.on('openWelcomePage', function() {
 		openPage('openWelcomePage');

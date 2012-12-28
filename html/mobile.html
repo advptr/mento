@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Mentometer</title>
+<meta charset='utf-8'>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<!-- <link rel="stylesheet" href="css/bootstrap.min.css" /> -->
+<link rel="stylesheet" href="css/jquery.mobile.min.css" />
+<link rel="stylesheet" href="css/mento.css" />
+
+<style>
+.text-info {
+	float: right; 
+	margin: 10px 10px auto; 
+	font-size: 10px;
+	color: darkblue;
+}
+
+[data-role=footer]{bottom:0; position:absolute !important; top: auto !important; width:100%;}  
+
+</style>
+</head>
+
+<body>
+	<div id="pageId" data-role="page" data-theme="b">
+
+		<div data-role="header">
+			<h1>CADEC 2013</h1>
+		</div>
+
+		<div data-role="content" >
+			<div class="text-info">
+				<table>
+					<tr>
+						<td>Deltagare:</td>
+						<td id="users" class="">0</td>
+					</tr>
+					<tr>
+						<td>Din poäng:</td>
+						<td id="score">0</td>
+					</tr>
+					<tr>
+						<td>Svar:</td>
+						<td id="answers"></td>
+					</tr>
+				</table>
+			</div>
+			
+			<div id="welcome">
+				<h2>
+				 Var med!
+				</h2>
+				<p>
+					Rösta, quiza och vinn! <br/>
+					Fyll i din mail adress nedan och anslut.
+				</p>
+				<div id="login-section">
+					<div id="login" data-role="fieldcontain">
+						<input id="email" type="email" placeholder="Din mailadress" /> 
+					</div>
+					<div>
+							<button id="submitEmail" data-role="button" data-inline="true">Anslut</button>
+							<button id="submitLogout" disabled="disabled" data-role="button" data-inline="true">Logga ut</button>
+					</div>
+					<div data-role="popup" data-theme="e" id="mailError" class="ui-content" data-position-to="#login-section">
+						<a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
+						<p>Invalid mail address, try another!</p>
+					</div>
+				</div>
+			</div>
+
+			<div id="quiz" class="hide">
+				<h5 id="question-type"></h5>
+				<h2 id="question"></h2>
+				<div id="chart" class="hide"></div>
+				<div id="options">
+						<div class="ui-grid-a">
+						<div id="div-0" class="ui-block-a">
+							<button id="option-0" data-role="button" data-theme="b"></button> 
+						</div>
+						<div id="div-1" class="ui-block-b">
+							<button id="option-1" data-role="button" data-theme="e"></button> 
+						</div>
+						<div id="div-2" class="ui-block-a">
+							<button id="option-2" data-role="button" data-theme="c"></button> 
+						</div>
+						<div id="div-3" class="ui-block-b">
+							<button id="option-3" data-role="button" data-theme="a"></button> 
+						</div>
+					</div>
+					<div id="progressBar" class="progressBar"></div><br/>
+					<div id="countdown" style="text-align: center;" class="countDown hide"></div>
+				</div>
+			</div>
+		</div>
+		
+		<div id="footer" data-role="footer">
+			<div id="footer-email" style="text-align: center;">CADEC av <a href="http://www.callistaenterprise.se">Callista Enterprise AB</a> </div>
+		</div>
+
+	</div>
+
+
+	<!-- Socket.IO-->
+	<script src="js/socket.io.min.js"></script>
+	<script src='js/wsocket.js'></script>
+
+	<script src="https://www.google.com/jsapi"></script>
+
+	<script src="js/mento.js"></script>
+<!--	<script src="js/bootstrap.min.js"></script> -->
+
+	<!--  JQuery -->
+	<script src='js/jquery.min.js'></script>
+	<script src="js/jquery.mobile.min.js"></script>
+	<script src="js/jquery.progressbar.min.js"></script>
+
+	<script type="text/javascript">
+		var score = 0;
+
+		google.load("visualization", "1", {
+			packages : [ "corechart" ]
+		});
+
+		var login = function(emailAddress) {
+			Mento.login(emailAddress, function(ok) {
+				if (ok) {
+					$('#email').attr('disabled', 'disabled');
+					$('#submitEmail').button('disable').html('Ansluten').button('refresh');
+					$('#footer-email').html(emailAddress);
+					$('#email').val(emailAddress);
+					$('#submitLogout').button('enable');
+					Store.set( 'email', emailAddress );
+				} else {
+					$( "#mailError" ).popup("open");
+				}
+			});
+		};
+
+		var Store = (function() {
+			return {
+				set : function(name, value) { 
+					window.localStorage.setItem(name, value);
+				},
+
+				get : function(name) {
+					return window.localStorage.getItem(name);
+				},
+
+				remove : function(name) {
+					window.localStorage.removeItem(name);	
+				},
+			};
+		})();
+
+
+
+		
+		$('#submitEmail').click(function() {
+			login($('#email').val());
+		});
+		
+		// starts progress
+		var startProgress = function(timeout, readyCallback) {
+			var pb = $('<div>').css('text-align', 'center');
+			$('#options').append(pb);
+			pb.progressBar(100, { stepDuration : 1000, steps : timeout, showText : false,
+	            barImage	: 	{
+	                            	0:  'images/progressbg_green.gif',
+	                            	60: 'images/progressbg_orange.gif',
+	                        		80: 'images/progressbg_red.gif'
+	                        	}
+			});
+		    var downtimer;
+			downtimer = setInterval(function() {
+		    	timeout--;
+		    	if (timeout == -1) {
+					clearInterval(downtimer);
+					pb.remove();
+					readyCallback();
+		    	} else {
+		    		$('#countdown').html(pad(timeout));
+		    	}
+		    }, 1000);
+		}
+		
+		//
+		$(document).ready(function() {
+			$('#quiz').slideUp('fast');
+			$('#chart').slideUp('fast');
+
+			// comment out when running 
+			// $('#login-section').addClass('hide');
+			Mento.ready();
+			
+			//		
+			Mento.userUpdateHandler(function(data) {
+				console.log('users: ', data);
+				$('#users').html(data);
+			});
+			
+			//
+			Mento.answerUpdateHandler(function(data) {
+				console.log('answers: ', data);
+				$('#answers').html(data);
+			});
+
+
+			Mento.openWelcomePage(function() {
+				console.log('openWelcomePage');
+				$('#quiz').slideUp('fast');
+				$('#welcome').show();
+			});
+
+
+			// Display question
+			Mento.openHandler(function(data) {			
+				console.log('openQuestion: ' + JSON.stringify(data));
+				$('#question-type').html((data.question.answer != -1) ? "Quiz" : "Rösta");
+				$('#question').html(data.question.question + '?');
+				$('#answers').html('0');
+				for (var i = 0; i < 4; i++) {
+					$('#div-' + i).hide();
+				}
+				Store.remove('answer');
+				
+				$.each(data.question.options, function(index, option) {
+					var btn = $('#option-' + index);
+					btn.button('enable').html(option).button('refresh');
+					$('#div-' + index).show();
+					btn.unbind('click');
+
+					btn.click(function(e) {
+						e.preventDefault();
+						var answer = {};
+						answer.name = $('#email').val();
+						answer.option = index;
+						console.log(JSON.stringify(answer));
+						if (answer.option == data.question.answer) {
+							score++;
+							$('#score').html(score);
+						}
+						Mento.send('answer', answer);
+						Store.set( 'answer', answer.option );
+
+						for (var i = 0;i < data.question.options.length; i++) {
+							var id = '#option-' + i;
+							$(id).button('disable');
+							if (answer.option == i) {
+								$(id).buttonMarkup({ icon: "check" });
+							}
+						}
+					});
+				});
+
+				$('#options').slideDown(1000);
+				$('#welcome').hide();
+				$('#chart').fadeOut(1000);
+				$('#quiz').slideDown(1000).fadeIn(1000);
+				
+				$('#countdown').show();
+								
+				startProgress(data.timeout, function() {
+					Mento.send('results');
+					$('#countdown').hide();
+					$('#options').hide();
+				});
+				
+			});
+
+			Mento.showResults(function(data) {
+				$('#chart').empty();
+
+				var count = [];
+				
+				// set result counters to zero
+				$.each(data.options, function(i, option) {
+					count[i] = 0;
+				});
+				
+				// sum the results
+				$.each(data.answers, function(i, answer) {
+					count[answer.option]++;
+				});
+				
+				var array = [];
+				array[0] = ['Option', 'Votes' ];
+				var answer = Store.get('answer');
+				$.each(data.options, function(i, option) {
+					var text = (i+1) + '. ' + option;
+					if (i == answer) {
+							text += " •";
+					}
+					if (data.answer != -1 && data.answer == i) {
+						text += " √";
+					}
+					array[i+1] = [ text, count[i] ];
+				});
+				
+				var table = google.visualization.arrayToDataTable(array);
+
+				var options = {
+						chartArea : {left:10,top:0,width:"100%",height:"100%"},
+						is3D : true,
+						backgroundColor : { fill:'transparent' },
+						pieSliceText : 'value'
+				};
+
+				$('#option').slideUp(1000);
+				$('#quiz').slideDown(1000).fadeIn(1000);
+				$('#chart').fadeIn(1000).slideDown(1000, function() {
+					var chart = new google.visualization.PieChart($('#chart').get()[0]);
+					chart.draw(table, options);				
+				});	
+			});
+
+			//
+			Mento.openToplistPage(function(data) {
+				$('#chart').empty();
+				
+				var count = [];
+				$.each(data, function(n, question) {
+					console.log(JSON.stringify(question));
+					if (question.answer > -1) {
+						$.each(question.answers, function(i, answer) {
+							console.log(JSON.stringify(answer));
+							var inc = (answer.option == question.answer) ? 1 : 0;
+							count[answer.name] = (count[answer.name] == undefined) ? inc : count[answer.name]+inc;
+						});
+					}
+				});
+				
+				var sortedCount = [];
+				
+				var i = 0;
+				for (x in count) {
+					sortedCount[i++] = { "name": x, "count": count[x] };
+				}
+				count = null;
+				
+				sortedCount.sort(function(a, b) {
+					return (a.count == b.count) ? 0 : (b.count - a.count);
+				});
+				
+				var dataArray = [];
+				dataArray.push(['Deltagare', 'Antal']);
+				for (var n = 0; n < sortedCount.length && n < 10; n++) {
+					dataArray.push([sortedCount[n].name, sortedCount[n].count]);
+				}
+						
+				var table = google.visualization.arrayToDataTable(dataArray);
+				
+				var options = {
+						backgroundColor : { "fill": 'transparent' },
+						vAxis: { "title": 'Deltagare' },
+						hAxis: { "title": 'Antal', "format": '##', "gridlines" : { "count" : 3 } }
+				};
+
+				$('#question').text('Topp 10');
+				$('#welcome').hide();
+				$('#option').slideUp(1000);
+				$('#quiz').slideDown(1000).fadeIn(1000);
+				$('#chart').fadeIn(1000).slideDown(1000, function() {
+					var chart = new google.visualization.BarChart($('#chart').get()[0]);
+					chart.draw(table, options);				
+				});
+			});
+
+			$('#submitLogout').click(function() {
+				Store.removeItem('email');
+				$('#email').removeAttr('disabled');
+				$('#submitEmail').button('enable').html('Anslut').button('refresh');
+				$('#footer-email').html('CADEC av <a href="http://www.callistaenterprise.se">Callista Enterprise AB</a>');
+				$('#submitLogout').button('disable');
+				Mento.ready();
+			});
+			
+			var email = Store.get('email');
+			if (email != null) {
+				$('#email').val(email);
+				$('#submitEmail').click();
+			}
+			
+		});
+	</script>
+
+</body>
+</html>

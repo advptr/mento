@@ -32,6 +32,7 @@ function WSocket(host, port) {
 
         send: function(type, data, callback) {
             emit(type, data, callback);
-        }
+        },
+
     }
 }

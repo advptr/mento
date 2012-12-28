@@ -9,9 +9,7 @@
 
 </head>
 
-
 <body>
-
 	<div class="text-info" style="float: right; margin: 10px 10px auto;">
 		<table>
 			<tr>
@@ -152,6 +150,14 @@
 			});
 
 
+			Mento.openWelcomePage(function() {
+				console.log('openWelcomePage');
+				$('#quiz').slideUp('fast');
+				$('#welcome').removeClass('hide');
+				$('#num-answers').addClass('hide');
+			});
+
+
 			// Display question
 			Mento.openHandler(function(data) {			
 				console.log('openQuestion: ' + JSON.stringify(data));
@@ -160,7 +166,7 @@
 				var tr = $('#options');
 				tr.empty();
 				$('#num-answers').addClass('hide');
-
+				var btnClass = [ 'btn-primary', 'btn-danger', 'btn-warning', 'btn-success' ];
 				$.each(data.question.options, function(index, option) {
 					var btn = $('<input>').attr('type','button').attr('value', option).attr('id', index).addClass('btn');
 
@@ -207,6 +213,103 @@
 					$('#progressbar').css('width', '100%');
 				});
 				
+			});
+
+			Mento.showResults(function(data) {
+				$('#chart').empty();
+
+				var count = [];
+				
+				// set result counters to zero
+				$.each(data.options, function(i, option) {
+					count[i] = 0;
+				});
+				
+				// sum the results
+				$.each(data.answers, function(i, answer) {
+					count[answer.option]++;
+				});
+				
+				var array = [];
+				array[0] = ['Option', 'Votes' ];
+				$.each(data.options, function(i, option) {
+					var text = (i+1) + '. ' + option;
+					if (data.answer >= 0 && data.answer == i) {
+						text += " *";
+					}
+					array[i+1] = [ text, count[i] ];
+				});
+				
+				var table = google.visualization.arrayToDataTable(array);
+
+				var options = {
+						chartArea : {left:10,top:0,width:"100%",height:"100%"},
+						is3D : true,
+						backgroundColor : { fill:'transparent' },
+						pieSliceText : 'value'
+				};
+
+				$('#option').slideUp(1000);
+				$('#quiz').slideDown(1000).fadeIn(1000);
+				$('#chart').fadeIn(1000).slideDown(1000, function() {
+					var chart = new google.visualization.PieChart($('#chart').get()[0]);
+					chart.draw(table, options);				
+				});	
+			});
+
+			//
+			Mento.openToplistPage(function(data) {
+				$('#chart').empty();
+				
+				var count = [];
+				$.each(data, function(n, question) {
+					console.log(JSON.stringify(question));
+					if (question.answer > -1) {
+						$.each(question.answers, function(i, answer) {
+							console.log(JSON.stringify(answer));
+							var inc = (answer.option == question.answer) ? 1 : 0;
+							count[answer.name] = (count[answer.name] == undefined) ? inc : count[answer.name]+inc;
+						});
+					}
+				});
+				
+				var sortedCount = [];
+				
+				var i = 0;
+				for (x in count) {
+					sortedCount[i++] = { "name": x, "count": count[x] };
+				}
+				count = null;
+				
+				sortedCount.sort(function(a, b) {
+					return (a.count == b.count) ? 0 : (b.count - a.count);
+				});
+				
+				var dataArray = [];
+				dataArray.push(['Deltagare', 'Antal']);
+				for (var n = 0; n < sortedCount.length && n < 10; n++) {
+					dataArray.push([sortedCount[n].name, sortedCount[n].count]);
+				}
+						
+				var table = google.visualization.arrayToDataTable(dataArray);
+				
+				var options = {
+						backgroundColor : { "fill": 'transparent' },
+						vAxis: { "title": 'Deltagare' },
+						hAxis: { "title": 'Antal', "format": '##', "gridlines" : { "count" : 3 } }
+				};
+
+				$('#question').text('Topp 10 lista');
+				
+				if (!$('#welcome').hasClass('hide')) {
+					$('#welcome').addClass('hide');
+				}			
+				$('#option').slideUp(1000);
+				$('#quiz').slideDown(1000).fadeIn(1000);
+				$('#chart').fadeIn(1000).slideDown(1000, function() {
+					var chart = new google.visualization.BarChart($('#chart').get()[0]);
+					chart.draw(table, options);				
+				});
 			});
 			
 

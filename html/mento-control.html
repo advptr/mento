@@ -60,12 +60,12 @@
 		$('#openWelcomePage').click(function(e) {
 			console.log('openWelcomePage');
 			e.preventDefault();
-			Mento.openWelcomePage();
+			Mento.send('openWelcomePage');
 		});
 		$('#openToplistPage').click(function(e) {
 			console.log('openToplistPage');
 			e.preventDefault();
-			Mento.openToplistPage();
+			Mento.send('openToplistPage');
 		});
 
 	});
