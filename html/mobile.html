@@ -59,8 +59,8 @@
 						<input id="email" type="email" placeholder="Din mailadress" /> 
 					</div>
 					<div>
-							<button id="submitEmail" data-role="button" data-inline="true">Anslut</button>
-							<button id="submitLogout" disabled="disabled" data-role="button" data-inline="true">Logga ut</button>
+							<button id="submit-login" data-role="button" data-inline="true">Anslut</button>
+							<button id="submit-logout" disabled="disabled" data-role="button" data-inline="true">Logga ut</button>
 					</div>
 					<div data-role="popup" data-theme="e" id="mailError" class="ui-content" data-position-to="#login-section">
 						<a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
@@ -88,8 +88,7 @@
 							<button id="option-3" data-role="button" data-theme="a"></button> 
 						</div>
 					</div>
-					<div id="progressBar" class="progressBar"></div><br/>
-					<div id="countdown" style="text-align: center;" class="countDown hide"></div>
+					<div id="countdown" class="countdown hide"></div>
 				</div>
 			</div>
 		</div>
@@ -105,15 +104,13 @@
 	<script src="js/socket.io.min.js"></script>
 	<script src='js/wsocket.js'></script>
 
-	<script src="https://www.google.com/jsapi"></script>
-
 	<script src="js/mento.js"></script>
 <!--	<script src="js/bootstrap.min.js"></script> -->
 
 	<!--  JQuery -->
 	<script src='js/jquery.min.js'></script>
 	<script src="js/jquery.mobile.min.js"></script>
-	<script src="js/jquery.progressbar.min.js"></script>
+	<script src="https://www.google.com/jsapi"></script>
 
 	<script type="text/javascript">
 		var score = 0;
@@ -126,10 +123,10 @@
 			Mento.login(emailAddress, function(ok) {
 				if (ok) {
 					$('#email').attr('disabled', 'disabled');
-					$('#submitEmail').button('disable').html('Ansluten').button('refresh');
+					$('#submit-login').button('disable').html('Ansluten').button('refresh');
 					$('#footer-email').html(emailAddress);
 					$('#email').val(emailAddress);
-					$('#submitLogout').button('enable');
+					$('#submit-logout').button('enable');
 					Store.set( 'email', emailAddress );
 				} else {
 					$( "#mailError" ).popup("open");
@@ -156,27 +153,17 @@
 
 
 		
-		$('#submitEmail').click(function() {
+		$('#submit-login').click(function() {
 			login($('#email').val());
 		});
 		
 		// starts progress
 		var startProgress = function(timeout, readyCallback) {
-			var pb = $('<div>').css('text-align', 'center');
-			$('#options').append(pb);
-			pb.progressBar(100, { stepDuration : 1000, steps : timeout, showText : false,
-	            barImage	: 	{
-	                            	0:  'images/progressbg_green.gif',
-	                            	60: 'images/progressbg_orange.gif',
-	                        		80: 'images/progressbg_red.gif'
-	                        	}
-			});
 		    var downtimer;
 			downtimer = setInterval(function() {
 		    	timeout--;
 		    	if (timeout == -1) {
 					clearInterval(downtimer);
-					pb.remove();
 					readyCallback();
 		    	} else {
 		    		$('#countdown').html(pad(timeout));
@@ -353,7 +340,7 @@
 				var options = {
 						backgroundColor : { "fill": 'transparent' },
 						vAxis: { "title": 'Deltagare' },
-						hAxis: { "title": 'Antal', "format": '##', "gridlines" : { "count" : 3 } }
+						hAxis: { "title": 'Antal', "format": '##' }
 				};
 
 				$('#question').text('Topp 10');
@@ -366,19 +353,19 @@
 				});
 			});
 
-			$('#submitLogout').click(function() {
-				Store.removeItem('email');
+			$('#submit-logout').click(function() {
+				Store.remove('email');
 				$('#email').removeAttr('disabled');
-				$('#submitEmail').button('enable').html('Anslut').button('refresh');
+				$('#submit-login').button('enable').html('Anslut').button('refresh');
 				$('#footer-email').html('CADEC av <a href="http://www.callistaenterprise.se">Callista Enterprise AB</a>');
-				$('#submitLogout').button('disable');
+				$('#submit-logout').button('disable');
 				Mento.ready();
 			});
 			
 			var email = Store.get('email');
 			if (email != null) {
 				$('#email').val(email);
-				$('#submitEmail').click();
+				$('#submit-login').click();
 			}
 			
 		});
