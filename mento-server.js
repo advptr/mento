@@ -1,13 +1,13 @@
 console.log('mento');
 
-var port = 8080;
 var homePage = '/mento.html';
 var root = 'html';
 
 var io = require('socket.io'),
 fs = require('fs'),
 url = require('url'),
-http = require('http');
+http = require('http'),
+argv = require('optimist').usage('Usage: $0 --port [http_port]').default('port', 8080).argv;
 
 var questions = JSON.parse(fs.readFileSync('questions.json', 'utf8'));
 
@@ -71,8 +71,8 @@ var server = http.createServer(function(req, res) {
 			log(rec);
 		}
 	});
-}).listen(port, function() {
-	console.log('Listening at: http://localhost:' + port);
+}).listen(argv.port, function() {
+	console.log('Listening at: http://localhost:' + argv.port);
 });
 
 var num = -1;
@@ -93,6 +93,7 @@ Client.prototype.emit = function(cmd, object) {
 
 Client.prototype.emitAll = function(cmd, object) {
 	this.socket.emit(cmd, object);
+	this.socket.broadcast.emit(cmd, object);
 	return this;
 };
 
@@ -154,7 +155,7 @@ var openPage = function(pageName, data) {
 
 //Listens on connections from clients
 
-io.listen(server).on('connection', function (socket) {
+io.listen(server, { log: false }).on('connection', function (socket) {
 
 	var client = new Client(socket);
 
