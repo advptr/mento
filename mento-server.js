@@ -1,111 +1,74 @@
-console.log('mento');
+// globals
+var root = '/html',
+io = require('socket.io'), express = require('express'), fs = require('fs'), http = require('http'),
+argv = require('optimist').usage('Usage: $0 --port [http_port]').default('port', 8080).argv,
+questions = JSON.parse(fs.readFileSync('questions.json', 'utf8')),
+app = express(),
+Client = require('./lib/Client.js');
 
-var homePage = '/mento.html';
-var root = 'html';
+app.configure(function() {
+	app.use(express.favicon());
+	app.use(express.static(__dirname + root));	
+	app.use(express.errorHandler({ showStack: true, dumpExceptions: true }));
+});
 
-var io = require('socket.io'),
-fs = require('fs'),
-url = require('url'),
-http = require('http'),
-argv = require('optimist').usage('Usage: $0 --port [http_port]').default('port', 8080).argv;
 
-var questions = JSON.parse(fs.readFileSync('questions.json', 'utf8'));
-
-var mimeType = function(file) {
-	var index = file.lastIndexOf('.');
-	if (index == -1) {
-		return "text/plain";
-	}
-	var ext = file.substring(index+1);
-	switch (ext) {
-	case 'html':
-		return 'text/html';
-	case 'css':
-		return 'text/css';
-	case 'js':
-		return 'application/javascript';
-	case 'woff':
-		return 'application/x-font-woff';
-	case 'eot':
-		return 'application/vnd.ms-fontobject';
-	case 'svg':
-	case 'svgz':
-		return 'image/svg+xml';
-	case 'ttf':
-		return 'application/x-font-ttf';
-	default:
-		return 'text/plain';
-	}
-};
-
-var log = function(rec) {
-    console.log(rec.time + ' - ' + rec.code + ' ' + rec.client + ', ' + rec.file + ', ' + rec.mime);
-};
-
-// Tiny WebServer
-var server = http.createServer(function(req, res) {
-	var path = url.parse(req.url).pathname;
-	var file = root + ((path == '/') ? homePage : path);
-	var rec = { "time" : new Date().toISOString(), "client" : req.connection.remoteAddress, "file" : file, "mime" : null, "code" : 200, "err" : null };
-
-	fs.exists(file, function(exists) {
-		if (exists) {
-			rec.mime = mimeType(file);
-			res.writeHead(200, { 'Content-type': rec.mime });
-			fs.readFile(file, function(err, data) {
-				if (err) {
-					res.writeHead(500, { 'Content-type': 'text/plain'});
-					res.end("500 - " + http.STATUS_CODES[500] + ', ' + err);
-					rec.err = err;
-					rec.code = 500;
-				} else {
-					res.end(data);
-					res.writeHead(200, { 'Content-type': rec.mime });
-				}
-				//log(rec);
-			});
-		} else {
-			res.writeHead(404, { 'Content-type': 'text/plain'});
-			res.end("404 - " + http.STATUS_CODES[404]);
-			rec.code = 404;
-			log(rec);
-		}
-	});
-}).listen(argv.port, function() {
+// WebServer
+var server = http.createServer(app).listen(argv.port, function() {
 	console.log('Listening at: http://localhost:' + argv.port);
 });
 
-var num = -1;
 var clients = [];
 
-var Client = function(socket) {
-	this.socket = socket;
-	this.email = null;
-};
+var activeQuestion = new function() {
+	var _id;
+	var _timeout = 0;
+	var _opened = 0;
+	var _numQuiz = 0;
+	var _numVote = 0;
 
-Client.prototype.emit = function(cmd, object) {
-	if (this.email != null) {
-		this.socket.emit(cmd, object);
+	this.now = function() {
+		return new Date().getTime();
 	}
-	return this;
-};
+
+	//
+	this.activate = function(id, quiz, timeout) {
+		_id = id;
+		_timeout = (timeout * 1000);
+		_opened = this.now();
+		if (quiz) {
+			_numQuiz++;
+		} else {
+			_numVote++;
+		}
+		console.log("numQuiz = %d", _numQuiz);
+	}
+
+	//
+	this.getNumQuiz = function() {
+		return _numQuiz;
+	}
+
+	//
+	this.getNumVote = function() {
+		return _numVote;
+	}
 
 
-Client.prototype.emitAll = function(cmd, object) {
-	this.socket.emit(cmd, object);
-	this.socket.broadcast.emit(cmd, object);
-	return this;
-};
+	// timeout in seconds
+	this.getTimeout = function() {
+		var t = (_timeout - (this.now() - _opened));
+		return Math.round(t / 1000);
+	}
 
-Client.prototype.userUpdate = function(n) {
-	this.emitAll('users', n);
-	return this;
-};
+	this.getId = function() {
+		return _id;
+	}
 
-Client.prototype.answerUpdate = function(n) {
-	this.emitAll('answers', n);
-	return this;
-};
+	this.isActive = function() {
+		return ((this.now() - _opened) < (_timeout - 3000));
+	}
+}
 
 Array.prototype.remove = function(e) {
 	var i = this.indexOf(e);
@@ -113,52 +76,31 @@ Array.prototype.remove = function(e) {
 		return this.splice(i, 1);
 	}
 	return this;
-};
-
-var userUpdate = function () {
-	for (var i = 0; i < clients.length; i++) {
-		clients[i].userUpdate(clients.length);
-	}
-};
-
-var answerUpdate = function () {
-	for (var i = 0; i < clients.length; i++) {
-		clients[i].answerUpdate(questions[num].answers.length);
-	}
-};
+}
 
 var saveQuestion = function() {
+	var num = activeQuestion.getId();
 	fs.writeFile('Q' + num + '.result', JSON.stringify(questions[num]));
-};
-
-var openQuestion = function(data) {
-	if (num >= 0) {
-		saveQuestion();
-	}
-	num = data.num;
-	console.log('send: ' + JSON.stringify(questions[num]));
-	for (var i = 0; i < clients.length; i++) {
-		questions[num].answers = [];
-		clients[i].emit('openQuestion', { "question" : questions[num], "timeout" : data.timeout });
-	}	
-};
+}
 
 var openPage = function(pageName, data) {
-	if (num >= 0) {
-		saveQuestion();		
-	}
 	for (var i = 0; i < clients.length; i++) {
 		clients[i].emit(pageName, data);
 	}		
-};
+}
+
+var openQuestion = function(data) {
+	var num = data.num;
+	questions[num].answers = [];
+	activeQuestion.activate(num, (questions[num].answer > -1), data.timeout);
+	openPage('openQuestion', { "question" : questions[num], "timeout" : data.timeout });
+}
 
 
-//Listens on connections from clients
-
+// Listens on connections from clients
 io.listen(server, { log: false }).on('connection', function (socket) {
 
-	var client = new Client(socket);
-
+	var client = Client(socket);
 	clients.push(client);
 
 	console.log("connection: " + socket.id);
@@ -166,14 +108,14 @@ io.listen(server, { log: false }).on('connection', function (socket) {
 	socket.on('disconnect', function() {
 		console.log('disconnect');
 		clients.remove(client);
-		userUpdate();
+		client.emitAll('users', clients.length);
 	});
 
 	socket.on('logout', function() {
 		console.log('logout');
 		clients.remove(client);
-		userUpdate();
-	    });
+		client.emitAll('users', clients.length);
+	});
 
 	socket.on('openWelcomePage', function() {
 		openPage('openWelcomePage');
@@ -188,7 +130,7 @@ io.listen(server, { log: false }).on('connection', function (socket) {
 	});
 
 	socket.on('email', function(email) {
-		console.log('connected email: ', email);
+		console.log('email attempt: ', email);
 		for (var i = 0; i < clients.length; i++) {
 			if (email == clients[i].email) {
 				socket.emit('email', false);
@@ -196,20 +138,28 @@ io.listen(server, { log: false }).on('connection', function (socket) {
 				return;
 			}
 		}
-		client.email = email;
+		client.setEmail(email);
 		console.log('accepted email: ', email);
 		socket.emit('email', true);
-		userUpdate();
+		if (activeQuestion.isActive()) {
+			client.emit('openQuestion', { "question" : questions[activeQuestion.getId()], "timeout" : activeQuestion.getTimeout() });
+		}
+		client.emitAll('users', clients.length);
 	});
 
 	socket.on('results', function() {
-		socket.emit('results', questions[num]);
+		socket.emit('results', questions[activeQuestion.getId()]);
 	});
 
 	socket.on('answer', function(data) {
+		var num = activeQuestion.getId();
 		if (num >= 0 && num < questions.length) {
 			questions[num].answers.push(data);
-			answerUpdate();
+			if (questions[num].answer > -1) {
+				client.answer(num, (data.option == questions[num].answer));
+				client.emit('actualResult', client.result(activeQuestion.getNumQuiz()));
+			}
+			client.emitAll('answers', questions[num].answers.length);
 		}
 	});
 

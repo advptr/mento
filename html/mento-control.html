@@ -1,36 +1,36 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>Mento Control</title>
-<meta charset='utf-8'>
+	<title>Mento Control</title>
+	<meta charset='utf-8'>
 
-<link href="css/bootstrap.min.css" rel="stylesheet" >
-<link href="css/mento.css" rel="stylesheet">
+	<link href="css/bootstrap.min.css" rel="stylesheet" >
+	<link href="css/mento.css" rel="stylesheet">
 
 </head>
 
 <body>
 	<h1>Control Panel</h1>
 	<div class="control-group">
-			<input id="openWelcomePage" type="button" class="btn btn-primary" value="To Welcome Page" />
-			<input id="openToplistPage" type="button" class="btn btn-primary" value="To Toplist Page" />
+		<input id="openWelcomePage" type="button" class="btn btn-primary" value="To Welcome Page" />
+		<input id="openToplistPage" type="button" class="btn btn-primary" value="To Toplist Page" />
 	</div>
-	<div class="text-info">Think time (s):</div> <input id="time" type="number" value="20" />
+	<div>Think time (s):</div> <input id="time" type="number" value="20" />
 	<br/>
-	<p class="text-info">Questions</p>
+	<p>Questions</p>
 	<table id="questions">
 	</table>
 
-<script src='js/jquery.min.js'></script>
-<script src="js/bootstrap.min.js"></script>
+	<script src='js/jquery.min.js'></script>
+	<script src="js/bootstrap.min.js"></script>
 
 
-<!-- Socket.IO-->
-<script src="js/socket.io.min.js"></script>
-<script src='js/wsocket.js'></script>
-<script src="js/mento.js"></script>
+	<!-- Socket.IO-->
+	<script src="js/socket.io.min.js"></script>
+	<script src='js/wsocket.js'></script>
+	<script src="js/mento.js"></script>
 
-<script type="text/javascript">
+	<script type="text/javascript">
 	$(document).ready(function() {
 		Mento.ready();
 		Mento.questions(function(data) {
