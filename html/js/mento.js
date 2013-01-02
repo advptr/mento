@@ -75,6 +75,10 @@ var Mento = (function() {
 			mentoWS.listen('openToplistPage', callback);	
 		},
 
+		connected : function(callback) {
+			mentoWS.listen('ack', callback);
+		},
+
 		showResults : function(callback) {
 			mentoWS.listen('results', callback);	
 		},

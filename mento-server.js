@@ -102,11 +102,12 @@ io.listen(server, { log: false }).on('connection', function (socket) {
 
 	var client = Client(socket);
 	clients.push(client);
+	socket.emit('ack');
 
 	console.log("connection: " + socket.id);
 
 	socket.on('disconnect', function() {
-		console.log('disconnect');
+		console.log('Disconnected: ' + client.getEmail());
 		clients.remove(client);
 		client.emitAll('users', clients.length);
 	});

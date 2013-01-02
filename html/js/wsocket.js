@@ -5,10 +5,6 @@ function WSocket(host, port) {
         console.log("Trying to connect to: " + url);
         socket = io.connect(url);
 
-        socket.on('ack', function() {
-            console.log('Successfully connected to: ' + url);
-        });
-
     };
 
     var on = function(type, action) {
