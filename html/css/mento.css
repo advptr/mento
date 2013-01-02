@@ -4,7 +4,6 @@
 @CHARSET "UTF-8";
 
 
-
 @font-face {
 	font-family: 'DigitaldreamFat';
 	src: url('font/Digital-dream/DIGITALDREAMFAT-webfont.eot');
@@ -40,7 +39,7 @@
 	display: none;
 }
 
-.text-info {
+.status-info {
 	float: right; 
 	margin: 10px 10px auto; 
 	font-size: 10px;

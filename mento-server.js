@@ -21,11 +21,11 @@ var server = http.createServer(app).listen(argv.port, function() {
 var clients = [];
 
 var activeQuestion = new function() {
-	var _id;
-	var _timeout = 0;
-	var _opened = 0;
-	var _numQuiz = 0;
-	var _numVote = 0;
+	this.id = 0;
+	this.timeout = 0;
+	this.opened = 0;
+	this.numQuiz = 0;
+	this.numVote = 0;
 
 	this.now = function() {
 		return new Date().getTime();
@@ -33,40 +33,40 @@ var activeQuestion = new function() {
 
 	//
 	this.activate = function(id, quiz, timeout) {
-		_id = id;
-		_timeout = (timeout * 1000);
-		_opened = this.now();
+		this.id = id;
+		this.timeout = (timeout * 1000);
+		this.opened = this.now();
 		if (quiz) {
-			_numQuiz++;
+			this.numQuiz++;
 		} else {
-			_numVote++;
+			this.numVote++;
 		}
-		console.log("numQuiz = %d", _numQuiz);
+		console.log("numQuiz = %d", this.numQuiz);
 	}
 
 	//
 	this.getNumQuiz = function() {
-		return _numQuiz;
+		return this.numQuiz;
 	}
 
 	//
 	this.getNumVote = function() {
-		return _numVote;
+		return this.numVote;
 	}
 
 
 	// timeout in seconds
 	this.getTimeout = function() {
-		var t = (_timeout - (this.now() - _opened));
+		var t = (this.timeout - (this.now() - this.opened));
 		return Math.round(t / 1000);
 	}
 
 	this.getId = function() {
-		return _id;
+		return this.id;
 	}
 
 	this.isActive = function() {
-		return ((this.now() - _opened) < (_timeout - 3000));
+		return ((this.now() - this.opened) < (this.timeout - 3000));
 	}
 }
 
@@ -149,7 +149,8 @@ io.listen(server, { log: false }).on('connection', function (socket) {
 	});
 
 	socket.on('results', function() {
-		socket.emit('results', questions[activeQuestion.getId()]);
+		var results = { "question" : questions[activeQuestion.getId()], "score" : client.result(activeQuestion.getNumQuiz()) };
+		socket.emit('results', results);
 	});
 
 	socket.on('answer', function(data) {
@@ -158,7 +159,6 @@ io.listen(server, { log: false }).on('connection', function (socket) {
 			questions[num].answers.push(data);
 			if (questions[num].answer > -1) {
 				client.answer(num, (data.option == questions[num].answer));
-				client.emit('actualResult', client.result(activeQuestion.getNumQuiz()));
 			}
 			client.emitAll('answers', questions[num].answers.length);
 		}

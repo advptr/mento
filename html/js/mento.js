@@ -109,11 +109,6 @@ var Mento = (function() {
 		
 		loginHandler : function(callback) {
 			mentoWS.listen('email', callback);
-		},
-
-		actualResult : function(callback) {
-			mentoWS.listen('actualResult', callback);
-		}
-		
+		}		
 	};
 }());

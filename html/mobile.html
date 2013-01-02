@@ -4,7 +4,6 @@
 	<title>Mentometer</title>
 	<meta charset='utf-8'>
 	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<!-- <link rel="stylesheet" href="css/bootstrap.min.css" /> -->
 	<link rel="stylesheet" href="css/jquery.mobile.min.css" />
 	<link rel="stylesheet" href="css/mento.css" />
 </head>
@@ -13,11 +12,12 @@
 	<div id="pageId" data-role="page" data-theme="b">
 
 		<div data-role="header">
+			<button id="submit-home" data-mini="true" data-iconpos="notext" data-direction="reverse" data-role="button" data-inline="true" data-icon="home"></button>
 			<h1>CADEC 2013</h1>
 		</div>
 
 		<div data-role="content" >
-			<div class="text-info">
+			<div class="status-info">
 				<table>
 					<tr>
 						<td>Deltagare:</td>
@@ -101,58 +101,60 @@
 	<script src="https://www.google.com/jsapi"></script>
 
 	<script type="text/javascript">
-	google.load("visualization", "1", {
-		packages : [ "corechart" ]
-	});
+		var connected = false;
 
-	var login = function(emailAddress) {
-		Mento.login(emailAddress, function(ok) {
-			if (ok) {
-				$('#email').attr('disabled', 'disabled');
-				$('#submit-login').button('disable').html('Ansluten').button('refresh');
-				$('#footer-email').html(emailAddress);
-				$('#email').val(emailAddress);
-				$('#submit-logout').button('enable');
-				Store.set( 'email', emailAddress );
-			} else {
-				$( "#mailError" ).popup("open");
-			}
+		google.load("visualization", "1", {
+			packages : [ "corechart" ]
 		});
-	};
 
-	var Store = (function() {
-		return {
-			set : function(name, value) { 
-				window.localStorage.setItem(name, value);
-			},
-
-			get : function(name) {
-				return window.localStorage.getItem(name);
-			},
-
-			remove : function(name) {
-				window.localStorage.removeItem(name);	
-			},
+		var login = function(emailAddress) {
+			Mento.login(emailAddress, function(ok) {
+				if (ok) {
+					$('#email').attr('disabled', 'disabled');
+					$('#submit-login').button('disable').html('Ansluten').button('refresh');
+					$('#footer-email').html(emailAddress);
+					$('#email').val(emailAddress);
+					$('#submit-logout').button('enable');
+					Store.set( 'email', emailAddress );
+					connected = true;
+				} else {
+					$( "#mailError" ).popup("open");
+				}
+			});
 		};
-	})();
+
+		var Store = (function() {
+			return {
+				set : function(name, value) { 
+					window.localStorage.setItem(name, value);
+				},
+
+				get : function(name) {
+					return window.localStorage.getItem(name);
+				},
+
+				remove : function(name) {
+					window.localStorage.removeItem(name);	
+				},
+			};
+		})();
 
 
-
-
-	$('#submit-login').click(function() {
-		login($('#email').val());
-	});
+		$('#submit-login').click(function() {
+			login($('#email').val());
+		});
 
 		// starts progress
 		var startProgress = function(timeout, readyCallback) {
 			var downtimer;
+			var start = new Date().getTime();
+			var max = (timeout * 1000);
 			downtimer = setInterval(function() {
-				timeout--;
-				if (timeout == -1) {
-					clearInterval(downtimer);
+				if ((new Date().getTime() - start) > max) {
 					readyCallback();
+					clearInterval(downtimer);
 				} else {
-					$('#countdown').html(pad(timeout));
+					$('#countdown').html(pad(--timeout));
 				}
 			}, 1000);
 		}
@@ -166,6 +168,11 @@
 			// $('#login-section').addClass('hide');
 			Mento.ready();
 			
+			//
+			$('#submit-home').click(function() {
+				window.location.reload();
+			});
+
 			//		
 			Mento.userUpdateHandler(function(data) {
 				console.log('users: ', data);
@@ -239,30 +246,41 @@
 				
 			});
 
-Mento.showResults(function(data) {
-	$('#chart').empty();
+			Mento.connected(function() {
+				console.log('connected to server');
+				if (connected === true) {
+					Mento.login($('#email').val(), function(rc) {
+						console.log('Reconnected: ' + rc);
+					});
+				}
+			});
 
-	var count = [];
+			Mento.showResults(function(results) {
+				$('#chart').empty();
+
+				var count = [];
+
+				$('#score').html(results.score.correct + ' (' + results.score.total + ')');
 
 				// set result counters to zero
-				$.each(data.options, function(i, option) {
+				$.each(results.question.options, function(i, option) {
 					count[i] = 0;
 				});
 				
 				// sum the results
-				$.each(data.answers, function(i, answer) {
+				$.each(results.question.answers, function(i, answer) {
 					count[answer.option]++;
 				});
 				
 				var array = [];
 				array[0] = ['Option', 'Votes' ];
 				var answer = Store.get('answer');
-				$.each(data.options, function(i, option) {
+				$.each(results.question.options, function(i, option) {
 					var text = (i+1) + '. ' + option;
 					if (i == answer) {
 						text += " •";
 					}
-					if (data.answer != -1 && data.answer == i) {
+					if (results.question.answer != -1 && results.question.answer == i) {
 						text += " √";
 					}
 					array[i+1] = [ text, count[i] ];
@@ -283,11 +301,6 @@ Mento.showResults(function(data) {
 					var chart = new google.visualization.PieChart($('#chart').get()[0]);
 					chart.draw(table, options);				
 				});	
-			});
-
-			//
-			Mento.actualResult(function (data) {
-				$('#score').html(data.correct + ' (' + data.total + ')');
 			});
 
 			//
@@ -321,7 +334,7 @@ Mento.showResults(function(data) {
 				});
 				
 				var dataArray = [];
-				dataArray.push(['Deltagare', 'Antal']);
+				dataArray.push(['Email', 'Rätt']);
 				for (var n = 0; n < sortedCount.length && n < 10; n++) {
 					dataArray.push([sortedCount[n].name, sortedCount[n].count]);
 				}
@@ -345,22 +358,22 @@ Mento.showResults(function(data) {
 				});
 			});
 
-$('#submit-logout').click(function() {
-	Store.remove('email');
-	$('#email').removeAttr('disabled');
-	$('#submit-login').button('enable').html('Anslut').button('refresh');
-	$('#footer-email').html('CADEC av <a href="http://www.callistaenterprise.se">Callista Enterprise AB</a>');
-	$('#submit-logout').button('disable');
-	Mento.ready();
-});
+			$('#submit-logout').click(function() {
+				Store.remove('email');
+				$('#email').removeAttr('disabled');
+				$('#submit-login').button('enable').html('Anslut').button('refresh');
+				$('#footer-email').html('CADEC av <a href="http://www.callistaenterprise.se">Callista Enterprise AB</a>');
+				$('#submit-logout').button('disable');
+				Mento.ready();
+			});
 
-var email = Store.get('email');
-if (email != null) {
-	$('#email').val(email);
-	$('#submit-login').click();
-}
+			var email = Store.get('email');
+			if (email != null) {
+				$('#email').val(email);
+				$('#submit-login').click();
+			}
 
-});
+	});
 </script>
 
 </body>
