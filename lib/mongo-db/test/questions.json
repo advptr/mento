@@ -1,0 +1,8 @@
+[
+	{ "question": "No är rätt", "options": [ "Yes", "No" ], "answer": 1 },
+	{ "question": "Yes är rätt", "options": [ "Yes", "No" ], "answer": 0  },
+	{ "question": "Vilken färg har java", "options": [ "Blå", "Röd", "Gul", "Grön" ], "answer": 0 },
+	{ "question": "Vad är det som gör Node.js så intressant", "options": [ "NIO", "JavaScript" ], "answer": 1 },
+	{ "question": "När postade Magnus L senaste blogginlägget", "options": [ "23/10", "24/10", "25/10" ], "answer": 1 }, 
+	{ "question": "Vem vinner presidentvalet i USA", "options": [ "Romney", "Obama" ], "answer": -1 }
+]
