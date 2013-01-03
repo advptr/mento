@@ -1,170 +1,258 @@
 // globals
 var root = '/html',
-io = require('socket.io'), express = require('express'), fs = require('fs'), http = require('http'),
-argv = require('optimist').usage('Usage: $0 --port [http_port]').default('port', 8080).argv,
-questions = JSON.parse(fs.readFileSync('questions.json', 'utf8')),
-app = express(),
-Client = require('./lib/Client.js');
+	io = require('socket.io'), express = require('express'), http = require('http'),
+	argv = require('optimist').usage('Usage: $0 --port [http_port]').default('port', 8080).argv,
+	app = express(),
+	Db = require('./lib/mongo-db'),
+	db = Db();
 
-app.configure(function() {
-	app.use(express.favicon());
-	app.use(express.static(__dirname + root));	
-	app.use(express.errorHandler({ showStack: true, dumpExceptions: true }));
-});
+db.open(function(err) {
+	if (err) {
+		console.log(err);
+		return;
+	}
+	
+	console.log('connected to', db);
 
+	app.configure(function() {
+		app.use(express.favicon());
+		app.use(express.static(__dirname + root));	
+		app.use(express.errorHandler({ showStack: true, dumpExceptions: true }));
+	});
 
-// WebServer
-var server = http.createServer(app).listen(argv.port, function() {
-	console.log('Listening at: http://localhost:' + argv.port);
-});
+	// WebServer
+	var server = http.createServer(app).listen(argv.port, function() {
+		console.log('Listening at: http://localhost:' + argv.port);
+	});
 
-var clients = [];
-
-var activeQuestion = new function() {
-	this.id = 0;
-	this.timeout = 0;
-	this.opened = 0;
-	this.numQuiz = 0;
-	this.numVote = 0;
-
-	this.now = function() {
-		return new Date().getTime();
+	// Keeps track of (user) sessions
+	function Session(socket) {
+		this.socket = socket;
+		this.participant = null;
 	}
 
-	//
-	this.activate = function(id, quiz, timeout) {
-		this.id = id;
-		this.timeout = (timeout * 1000);
-		this.opened = this.now();
-		if (quiz) {
-			this.numQuiz++;
-		} else {
-			this.numVote++;
+	// Participant
+	function Participant(email) {
+		this.email = email;
+		this.answers = [];
+		this.correct = 0;
+	}
+
+	// Answer
+	function Answer(round, option) {
+		this.round = round;
+		this.option = option;
+	}
+
+	// Vote or Quiz round
+	function Round() {
+		this.id = 0;
+		this.timeout = 0;
+		this.opened = 0;
+		this.numQuiz = 0;
+		this.numVote = 0;
+		this.answers = [];
+		this.question = null;
+
+		this.now = function() {
+			return new Date().getTime();
 		}
-		console.log("numQuiz = %d", this.numQuiz);
-	}
 
-	//
-	this.getNumQuiz = function() {
-		return this.numQuiz;
-	}
+		//
+		this.activate = function(id, timeout) {
+			this.id = id;
+			this.timeout = (timeout * 1000);
+			this.opened = this.now();
+			this.question = Session.questions[this.id];
+			if (this.question.answer > -1) {
+				this.numQuiz++;
+			} else {
+				this.numVote++;
+			}
+			this.answers = [];
+		}
 
-	//
-	this.getNumVote = function() {
-		return this.numVote;
-	}
+		// timeout in seconds
+		this.getTimeout = function() {
+			var t = (this.timeout - (this.now() - this.opened));
+			return Math.round(t / 1000);
+		}
 
-
-	// timeout in seconds
-	this.getTimeout = function() {
-		var t = (this.timeout - (this.now() - this.opened));
-		return Math.round(t / 1000);
-	}
-
-	this.getId = function() {
-		return this.id;
-	}
-
-	this.isActive = function() {
-		return ((this.now() - this.opened) < (this.timeout - 3000));
-	}
-}
-
-Array.prototype.remove = function(e) {
-	var i = this.indexOf(e);
-	if (i != -1) {
-		return this.splice(i, 1);
-	}
-	return this;
-}
-
-var saveQuestion = function() {
-	var num = activeQuestion.getId();
-	fs.writeFile('Q' + num + '.result', JSON.stringify(questions[num]));
-}
-
-var openPage = function(pageName, data) {
-	for (var i = 0; i < clients.length; i++) {
-		clients[i].emit(pageName, data);
-	}		
-}
-
-var openQuestion = function(data) {
-	var num = data.num;
-	questions[num].answers = [];
-	activeQuestion.activate(num, (questions[num].answer > -1), data.timeout);
-	openPage('openQuestion', { "question" : questions[num], "timeout" : data.timeout });
-}
-
-
-// Listens on connections from clients
-io.listen(server, { log: false }).on('connection', function (socket) {
-
-	var client = Client(socket);
-	clients.push(client);
-	socket.emit('ack');
-
-	console.log("connection: " + socket.id);
-
-	socket.on('disconnect', function() {
-		console.log('Disconnected: ' + client.getEmail());
-		clients.remove(client);
-		client.emitAll('users', clients.length);
-	});
-
-	socket.on('logout', function() {
-		console.log('logout');
-		clients.remove(client);
-		client.emitAll('users', clients.length);
-	});
-
-	socket.on('openWelcomePage', function() {
-		openPage('openWelcomePage');
-	});
-
-	socket.on('openToplistPage', function() {
-		openPage('openToplistPage', questions);
-	});
-
-	socket.on('openQuestion', function(data) {
-		openQuestion(data);		
-	});
-
-	socket.on('email', function(email) {
-		console.log('email attempt: ', email);
-		for (var i = 0; i < clients.length; i++) {
-			if (email == clients[i].email) {
-				socket.emit('email', false);
-				console.log('invalid email: ', email);
-				return;
+		//
+		this.addAnswer = function(answer) {
+			if (this.isActive()) {
+				this.answers.push(answer);
 			}
 		}
-		client.setEmail(email);
-		console.log('accepted email: ', email);
-		socket.emit('email', true);
-		if (activeQuestion.isActive()) {
-			client.emit('openQuestion', { "question" : questions[activeQuestion.getId()], "timeout" : activeQuestion.getTimeout() });
+
+		//
+		this.isActive = function() {
+			return ((this.now() - this.opened) < this.timeout);
 		}
-		client.emitAll('users', clients.length);
-	});
+	}
 
-	socket.on('results', function() {
-		var results = { "question" : questions[activeQuestion.getId()], "score" : client.result(activeQuestion.getNumQuiz()) };
-		socket.emit('results', results);
-	});
+	Session.reset = function() {
+		Session.sessions = [];
+		Session.round = new Round();
+		db.findQuestions(function(err, questions) {
+			console.log(err ? err : questions.length + ' questions fetched from db.');
+			Session.questions = questions;
+		});
+	}
 
-	socket.on('answer', function(data) {
-		var num = activeQuestion.getId();
-		if (num >= 0 && num < questions.length) {
-			questions[num].answers.push(data);
-			if (questions[num].answer > -1) {
-				client.answer(num, (data.option == questions[num].answer));
+	Session.reset();
+
+	Session.prototype.sendAll = function(cmd, object) {
+	   this.send(cmd, object);
+	   this.socket.broadcast.emit(cmd, object);	
+	   return this;
+	}
+
+	Session.prototype.send = function(cmd, object) {
+		this.socket.emit(cmd, object);
+		return this;	
+	}
+
+	Array.prototype.remove = function(e) {
+		var i = this.indexOf(e);
+		if (i != -1) {
+			return this.splice(i, 1);
+		}
+		return this;
+	}
+
+	var openPage = function(pageName, data) {
+		Session.sessions.forEach(function(session) {
+			if (session.participant) {
+				session.send(pageName, data);
 			}
-			client.emitAll('answers', questions[num].answers.length);
-		}
+		});
+	}
+
+	var openQuestion = function(data) {
+		var num = data.num;
+		Session.round.activate(num, data.timeout);
+		openPage('openQuestion', { "question" : Session.round.question, "timeout" : data.timeout });
+	}
+
+
+	// Listens on connections from clients
+	io.listen(server, { log: false }).on('connection', function (socket) {
+
+		var session = new Session(socket);
+		Session.sessions.push(session);
+		session.send('ack');
+
+
+		console.log(socket.id, ' connected');
+
+		socket.on('disconnect', function() {
+			console.log('disconnected', session.participant);
+			Session.sessions.remove(session);
+			session.sendAll('users', Session.sessions.length);
+		});
+
+		socket.on('logout', function() {
+			console.log('logout');
+			Session.sessions.remove(session);
+			session.sendAll('users', Session.sessions.length);
+		});
+
+		socket.on('openWelcomePage', function() {
+			openPage('openWelcomePage');
+		});
+
+		socket.on('openToplistPage', function() {
+			db.findParticipants(function(err, participants) {
+				if (err) {
+					console.log(err);
+				} else {
+					openPage('openToplistPage', { participants : participants, num : Session.round.numQuiz });
+				}
+			});
+		});
+
+		socket.on('openQuestion', function(data) {
+			openQuestion(data);		
+		});
+
+		socket.on('scratch', function(data) {
+			db.cleanParticipant(function(err) {
+				if (err) {
+					console.log('unexpected error', err);
+				} else {
+					Session.reset();
+					socket.broadcast.emit('ack');
+					console.log('Database scratched, new round!');
+				}
+			});
+		});
+
+		socket.on('email', function(email) {
+			console.log('email attempt: ', email);
+			// cannot connect if exists
+			Session.sessions.forEach(function(session) {
+				if (session.participant && session.participant.email == email) {
+					session.send('email', false);
+					console.log('email bound to existing session', email);
+					return;
+				}
+			});
+			db.findParticipant(email, function(err, participant) {
+				if (err) {
+					console.log('find', err);
+					session.send('email', false);
+				} else if (participant) {
+					session.participant = participant;
+					console.log('found', session.participant);
+					session.send('email', true);
+				} else {
+					session.participant = new Participant(email);
+					db.saveParticipant(session.participant, function(err) {
+						var rc = false;
+						if (!err) {
+							if (Session.round.isActive()) {
+								session.send('openQuestion', { question : Session.round.question, timeout : Session.round.getTimeout() });
+							}
+							session.sendAll('users', Session.sessions.length);
+							console.log('saved', session.participant);
+							rc = true;
+						} else {
+							console.log('unexpected error', err);
+						}
+						session.send('email', rc);
+					});
+				}
+			});
+		});
+
+		socket.on('results', function() {
+			var results = { question : Session.round.question, answers : Session.round.answers, score : { total : Session.round.numQuiz, correct : session.participant.correct } };
+			session.send('results', results);
+		});
+
+		socket.on('answer', function(data) {
+			if (session.participant) {
+				var num = Session.round.id;
+				Session.round.addAnswer(data);
+				session.participant.answers.push(new Answer(num, data.option));
+				if (data.option == Session.round.question.answer) {
+					session.participant.correct++;
+				}
+				db.saveParticipant(session.participant, function(err) {
+					if (!err) {
+						session.sendAll('answers', Session.round.answers.length);
+					} else {
+						console.log('unexpected error', err);
+					}
+				});
+			}
+		});
+
+		socket.on('questions', function() {
+			session.send('questions', Session.questions);
+		});
 	});
 
-	socket.on('questions', function() {
-		socket.emit('questions', questions);
-	});
 });
+

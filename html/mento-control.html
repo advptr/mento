@@ -18,15 +18,18 @@ body {
 <body>
 	<h1>Control Panel</h1>
 	<div class="control-group">
-			<input id="openWelcomePage" type="button" class="btn btn-primary" value="To Welcome Page" />
-			<input id="openToplistPage" type="button" class="btn btn-primary" value="To Toplist Page" />
+		<input id="openWelcomePage" type="button" class="btn btn-primary" value="To Welcome Page" />
+		<input id="openToplistPage" type="button" class="btn btn-primary" value="To Toplist Page" />
 	</div>
-	<div class="text-info">Think time (s):</div> <input id="time" type="number" value="20" />
+	<div class="text-info">Think time (s):</div> 
+	<input id="time" type="number" value="20" />
 	<br/>
 	<p class="text-info">Questions</p>
 	<table id="questions">
 	</table>
-
+	<div class="control-group">
+		<input id="resetAll" type="button" class="btn btn-warning" value="Scratch database and start over" />
+	</div>
 <script src='js/jquery.min.js'></script>
 <script src="js/bootstrap.min.js"></script>
 
@@ -57,7 +60,9 @@ body {
 				btn.click(function(e) {
 					e.preventDefault();
 					console.log('open: ', btn.attr('id'));
-					Mento.toQuestion({ "num" : parseInt(btn.attr('id')), "timeout" : parseInt($('#time').val()) });
+					var timeout = parseInt($('#time').val());
+					Store.set('timeout', timeout);
+					Mento.toQuestion({ num : parseInt(btn.attr('id')), timeout : timeout });
 					btn.remove();
 				});
 			});
@@ -74,6 +79,17 @@ body {
 			Mento.send('openToplistPage');
 		});
 
+		$('#resetAll').click(function(e) {
+			console.log('resetAll');
+			e.preventDefault();
+			Mento.send('scratch');
+			window.location.reload();
+		});
+
+		var timeout = Store.get('timeout');
+		if (timeout) {
+			$('#time').val(timeout);
+		}
 	});
 </script>
 </body>

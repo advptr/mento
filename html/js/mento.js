@@ -7,7 +7,28 @@ var isEmpty = function(s) {
 	return (s == undefined) || (s == null) || (s == '');
 };
 
+var now = function() {
+	return new Date().getTime();
+};
 
+// HTML5 local store
+var Store = (function() {
+	return {
+		set : function(name, value) { 
+			window.localStorage.setItem(name, value);
+		},
+
+		get : function(name) {
+			return window.localStorage.getItem(name);
+		},
+
+		remove : function(name) {
+			window.localStorage.removeItem(name);	
+		},
+	};
+})();
+
+// Quiz and Vote Events
 var Mento = (function() {
 	
 	var mentoWS = null;
@@ -22,7 +43,7 @@ var Mento = (function() {
 	}
 	
 	function login(email, callback) {
-		if (mentoWS && !isEmpty(email)) {
+		if (!isEmpty(email)) {
 			var regex = /^([a-zA-Z0-9_\.\-\+])+\@(([a-zA-Z0-9\-])+\.)+([a-zA-Z0-9]{2,4})+$/;
 			if (!regex.test(email)) {
 				console.log("email invalid: ", email);
@@ -30,15 +51,17 @@ var Mento = (function() {
 				return;
 			}
 			mentoWS.send('email', email);
-			mentoWS.listen('email', callback);
+			mentoWS.once('email', callback);
+			console.log('server validation of email address');
 		} else {
+			console.log('empty email address');
 			callback(false);
 		}
 	}
 	
 	function questions(callback) {
 		mentoWS.send("questions");
-		mentoWS.listen('questions', function(data) {
+		mentoWS.once('questions', function(data) {
 			callback(data);
 		});
 	}
@@ -53,14 +76,6 @@ var Mento = (function() {
 	return {
 		ready: function() {
 			connect();
-
-//			document.addEventListener('keypress', function(e) {
-//				console.log(e.keyCode);
-//				switch(e.keyCode){
-//				case 100 /* d */:
-//					break;
-//				}
-//			});
 		},
 			
 		questions : function(callback) {

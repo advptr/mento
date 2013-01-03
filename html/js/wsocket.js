@@ -15,6 +15,11 @@ function WSocket(host, port) {
         socket.emit(type, data, callback);
     };
 
+    var once = function(type, data, callback) {
+        socket.once(type, data, callback);
+    };
+
+
     var url = host;
     if (port) {
         url = ":" + port;
@@ -29,6 +34,10 @@ function WSocket(host, port) {
         send: function(type, data, callback) {
             emit(type, data, callback);
         },
+
+        once: function(type, data, callback) {
+            once(type, data, callback);
+        }
 
     }
 }

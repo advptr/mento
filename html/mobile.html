@@ -3,9 +3,9 @@
 <head>
 	<title>Mentometer</title>
 	<meta charset='utf-8'>
-	<meta name="viewport" content="width=device-width, initial-scale=1" />
-	<link rel="stylesheet" href="css/jquery.mobile.min.css" />
-	<link rel="stylesheet" href="css/mento.css" />
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="css/jquery.mobile.min.css">
+	<link rel="stylesheet" href="css/mento.css">
 </head>
 
 <body>
@@ -36,11 +36,10 @@
 			
 			<div id="welcome">
 				<h2>
-					Var med!
+					Tyck till!
 				</h2>
 				<p>
-					Rösta, quiza och vinn! <br/>
-					Fyll i din mail adress nedan och anslut.
+					Rösta, quiza och vinn!
 				</p>
 				<div id="login-section">
 					<div id="login" data-role="fieldcontain">
@@ -50,7 +49,7 @@
 						<button id="submit-login" data-role="button" data-inline="true">Anslut</button>
 						<button id="submit-logout" disabled="disabled" data-role="button" data-inline="true">Logga ut</button>
 					</div>
-					<div data-role="popup" data-theme="e" id="mailError" class="ui-content" data-position-to="#login-section">
+					<div data-role="popup" data-theme="e" id="popup-mail-error" class="ui-content" data-position-to="#login-section">
 						<a href="#" data-rel="back" data-role="button" data-icon="delete" data-iconpos="notext" class="ui-btn-right">Close</a>
 						<p>Invalid mail address, try another!</p>
 					</div>
@@ -103,13 +102,10 @@
 	<script type="text/javascript">
 		var connected = false;
 
-		google.load("visualization", "1", {
-			packages : [ "corechart" ]
-		});
-
 		var login = function(emailAddress) {
 			Mento.login(emailAddress, function(ok) {
-				if (ok) {
+				console.log('login', emailAddress, ok);
+				if (ok == true) {
 					$('#email').attr('disabled', 'disabled');
 					$('#submit-login').button('disable').html('Ansluten').button('refresh');
 					$('#footer-email').html(emailAddress);
@@ -118,27 +114,10 @@
 					Store.set( 'email', emailAddress );
 					connected = true;
 				} else {
-					$( "#mailError" ).popup("open");
+					$('#popup-mail-error').popup('open');
 				}
 			});
 		};
-
-		var Store = (function() {
-			return {
-				set : function(name, value) { 
-					window.localStorage.setItem(name, value);
-				},
-
-				get : function(name) {
-					return window.localStorage.getItem(name);
-				},
-
-				remove : function(name) {
-					window.localStorage.removeItem(name);	
-				},
-			};
-		})();
-
 
 		$('#submit-login').click(function() {
 			login($('#email').val());
@@ -147,10 +126,10 @@
 		// starts progress
 		var startProgress = function(timeout, readyCallback) {
 			var downtimer;
-			var start = new Date().getTime();
+			var start = now();
 			var max = (timeout * 1000);
 			downtimer = setInterval(function() {
-				if ((new Date().getTime() - start) > max) {
+				if ((now() - start) > max) {
 					readyCallback();
 					clearInterval(downtimer);
 				} else {
@@ -161,8 +140,8 @@
 		
 		//
 		$(document).ready(function() {
-			$('#quiz').slideUp('fast');
-			$('#chart').slideUp('fast');
+			$('#quiz').hide();
+			$('#chart').hide();
 
 			// comment out when running 
 			// $('#login-section').addClass('hide');
@@ -236,7 +215,7 @@
 				$('#countdown').show();
 
 				startProgress(data.timeout, function() {
-					// wait until all answers are ready to be displayed
+					// wait until all answers are ready to be displayed (1.5 seconds will do)
 					setTimeout(function() {
 						Mento.send('results');
 					}, 1500);
@@ -268,7 +247,7 @@
 				});
 				
 				// sum the results
-				$.each(results.question.answers, function(i, answer) {
+				$.each(results.answers, function(i, answer) {
 					count[answer.option]++;
 				});
 				
@@ -295,7 +274,7 @@
 					pieSliceText : 'value'
 				};
 
-				$('#option').hide();
+				$('#options').hide();
 				$('#quiz').show();
 				$('#chart').fadeIn(1000, function() {
 					var chart = new google.visualization.PieChart($('#chart').get()[0]);
@@ -304,52 +283,36 @@
 			});
 
 			//
-			Mento.openToplistPage(function(data) {
+			Mento.openToplistPage(function(result) {
 				$('#chart').empty();
 				
-				var count = [];
-				var numQuiz = 0;
-				$.each(data, function(n, question) {
-					console.log(JSON.stringify(question));
-					if (question.answer > -1) {
-						numQuiz++;
-						$.each(question.answers, function(i, answer) {
-							console.log(JSON.stringify(answer));
-							var inc = (answer.option == question.answer) ? 1 : 0;
-							count[answer.name] = (count[answer.name] == undefined) ? inc : count[answer.name]+inc;
-						});
-					}
+				var score = [];
+
+				$.each(result.participants, function(n, participant) {
+					score[n] = { name : participant.email, count : participant.correct };
 				});
 				
-				var sortedCount = [];
-				
-				var i = 0;
-				for (x in count) {
-					sortedCount[i++] = { "name": x, "count": count[x] };
-				}
-				count = null;
-				
-				sortedCount.sort(function(a, b) {
+				score.sort(function(a, b) {
 					return (a.count == b.count) ? 0 : (b.count - a.count);
 				});
 				
 				var dataArray = [];
-				dataArray.push(['Email', 'Rätt']);
-				for (var n = 0; n < sortedCount.length && n < 10; n++) {
-					dataArray.push([sortedCount[n].name, sortedCount[n].count]);
+				dataArray.push(['Deltagare', 'Rätt']);
+				for (var n = 0; n < score.length && n < 10; n++) {
+					dataArray.push([score[n].name, score[n].count]);
 				}
 
 				var table = google.visualization.arrayToDataTable(dataArray);
 				
 				var options = {
 					backgroundColor : { "fill": 'transparent' },
-					vAxis: { "title": 'Deltagare' },
-					hAxis: { "title": 'Antal', "format": '##', "maxValue" :  numQuiz, "minValue" : 0 }
+					vAxis: { title: 'Deltagare' },
+					hAxis: { title: 'Antal Rätt', format: '##', maxValue :  result.num, minValue : 0 }
 				};
 
 				$('#question-type').html('Resultat');
 				$('#question').text('Topp 10');
-				$('#option').hide();
+				$('#options').hide();
 				$('#welcome').hide();
 				$('#quiz').show();
 				$('#chart').fadeIn(1000, function() {
@@ -372,8 +335,13 @@
 				$('#email').val(email);
 				$('#submit-login').click();
 			}
-
 	});
+	
+	// load google charts stuff
+	google.load("visualization", "1", {
+		packages : [ "corechart" ]
+	});
+
 </script>
 
 </body>
