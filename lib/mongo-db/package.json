@@ -1,0 +1,38 @@
+{
+  "name": "quiz-db",
+  "version": "0.0.1",
+  "description": "Quiz database driver.",
+  "main": "./index.js",
+  "directories": {
+    "lib": ".",
+    "test": "test"
+  },
+  "dependencies": {
+    "mongodb": "~1.2.7"
+  },
+  "devDependencies": {
+    "tap": "~0.2.4"
+  },
+  "scripts": {
+    "test": "tap ./test/*.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/advptr/mento.git"
+  },
+  "keywords": [
+    "play"
+  ],
+  "author": {
+    "name": "Peter Larsson",
+    "email": "peter.larsson@callistaenterprise.se",
+    "url": "http://www.callistaenterprise.se"
+  },
+  "license": "Apache 2",
+  "engine": {
+    "node": ">=0.8"
+  },
+  "readme": "TBW",
+  "readmeFilename": "README.md"
+}
+
