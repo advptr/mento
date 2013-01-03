@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Länk - Quiz App</title>
+	<meta charset='utf-8'>
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="css/jquery.mobile.min.css">
+	<link rel="stylesheet" href="css/mento.css">
+	<style>
+		.center {
+			text-align: center;
+		}
+	</style>
+</head>
+
+<body>
+	<div data-role="page" data-theme="e">
+
+		<div data-role="header">
+			<button id="submit-home" data-mini="true" data-iconpos="notext" data-direction="reverse" data-role="button" data-inline="true" data-icon="home"></button>
+			<h1>Länk till App</h1>
+		</div>
+
+		<div data-role="content" >
+			<h2 id="app-url">
+			</h2>
+			
+			<div id="app-qr" class="center">
+			</div>
+		
+			<div id="footer" data-role="footer">
+				<div class="center">CADEC av <a href="http://www.callistaenterprise.se">Callista Enterprise AB</a> </div>
+			</div>
+
+	</div>
+
+	<!--  JQuery -->
+	<script src='js/jquery.min.js'></script>
+	<script src="js/jquery.mobile.min.js"></script>
+	<script src="js/jquery.qrcode.min.js"></script>
+
+	<script type="text/javascript">
+		$(document).ready(function() {
+			var address = 'http://localhost:8080';
+			$('#app-qr').qrcode({ width : 512, height : 512, text : address });
+			$('#app-url').html(address);
+			$('#submit-home').click(function() {
+				window.location = address;
+			});
+		});
+	</script>
+
+</body>
+</html>
