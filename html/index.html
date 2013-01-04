@@ -100,6 +100,12 @@
 	<script src="https://www.google.com/jsapi"></script>
 
 	<script type="text/javascript">
+
+		// load google charts stuff
+		google.load("visualization", "1", {
+			packages : [ "corechart" ]
+		});
+
 		var connected = false;
 
 		var login = function(emailAddress) {
@@ -252,34 +258,29 @@
 				});
 				
 				var array = [];
-				array[0] = ['Option', 'Votes' ];
+				array.push(['Option', 'Votes' ]);
 				var answer = Store.get('answer');
 				$.each(results.question.options, function(i, option) {
-					var text = (i+1) + '. ' + option;
 					if (i == answer) {
-						text += " •";
+						option += " •";
 					}
-					if (results.question.answer != -1 && results.question.answer == i) {
-						text += " √";
+					if (results.question.answer == i) {
+						option += " √";
 					}
-					array[i+1] = [ text, count[i] ];
+					array.push([ option, count[i] ]);
 				});
 				
-				var table = google.visualization.arrayToDataTable(array);
-
-				var options = {
+				var chart = new google.visualization.PieChart(document.getElementById('chart'));
+				chart.draw(google.visualization.arrayToDataTable(array), {
 					chartArea : {left:10,top:0,width:"100%",height:"100%"},
 					is3D : true,
 					backgroundColor : { fill:'transparent' },
 					pieSliceText : 'value'
-				};
+				});				
 
 				$('#options').hide();
 				$('#quiz').show();
-				$('#chart').fadeIn(1000, function() {
-					var chart = new google.visualization.PieChart($('#chart').get()[0]);
-					chart.draw(table, options);				
-				});	
+				$('#chart').fadeIn(1000);
 			});
 
 			//
@@ -301,24 +302,20 @@
 				for (var n = 0; n < score.length && n < 10; n++) {
 					dataArray.push([score[n].name, score[n].count]);
 				}
-
-				var table = google.visualization.arrayToDataTable(dataArray);
 				
-				var options = {
+				var chart = new google.visualization.BarChart(document.getElementById('chart'));
+				chart.draw(google.visualization.arrayToDataTable(dataArray), {
 					backgroundColor : { "fill": 'transparent' },
 					vAxis: { title: 'Deltagare' },
 					hAxis: { title: 'Antal Rätt', format: '##', maxValue :  result.num, minValue : 0 }
-				};
+				});				
 
 				$('#question-type').html('Resultat');
 				$('#question').text('Topp 10');
 				$('#options').hide();
 				$('#welcome').hide();
 				$('#quiz').show();
-				$('#chart').fadeIn(1000, function() {
-					var chart = new google.visualization.BarChart($('#chart').get()[0]);
-					chart.draw(table, options);				
-				});
+				$('#chart').fadeIn(1000);
 			});
 
 			$('#submit-logout').click(function() {
@@ -337,11 +334,6 @@
 			}
 	});
 	
-	// load google charts stuff
-	google.load("visualization", "1", {
-		packages : [ "corechart" ]
-	});
-
 </script>
 
 </body>

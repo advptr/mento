@@ -34,13 +34,13 @@ db.open(function(err) {
 	// Participant
 	function Participant(email) {
 		this.email = email;
+		this.answers = [];
+		this.correct = 0;
 
 		this.reset = function() {
 			this.answers = [];
 			this.correct = 0;
 		}
-
-		this.reset();
 	}
 
 	// Answer
