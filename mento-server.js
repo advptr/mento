@@ -34,8 +34,13 @@ db.open(function(err) {
 	// Participant
 	function Participant(email) {
 		this.email = email;
-		this.answers = [];
-		this.correct = 0;
+
+		this.reset = function() {
+			this.answers = [];
+			this.correct = 0;
+		}
+
+		this.reset();
 	}
 
 	// Answer
@@ -92,7 +97,14 @@ db.open(function(err) {
 	}
 
 	Session.reset = function() {
-		Session.sessions = [];
+		if (Session.sessions == undefined) {
+			Session.sessions = [];
+		}
+		Session.sessions.forEach(function(session) {
+			if (session.participant) {
+				session.participant.reset();
+			}
+		});
 		Session.round = new Round();
 		db.findQuestions(function(err, questions) {
 			console.log(err ? err : questions.length + ' questions fetched from db.');
