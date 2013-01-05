@@ -31,7 +31,7 @@
 			<div id="footer" data-role="footer">
 				<div class="center">CADEC av <a href="http://www.callistaenterprise.se">Callista Enterprise AB</a> </div>
 			</div>
-
+		</div>
 	</div>
 
 	<!--  JQuery -->
@@ -41,7 +41,7 @@
 
 	<script type="text/javascript">
 		$(document).ready(function() {
-			var address = 'http://localhost:8080';
+			var address = 'http://mento.callistaenterprise.com';
 			$('#app-qr').qrcode({ width : 512, height : 512, text : address });
 			$('#app-url').html(address);
 			$('#submit-home').click(function() {
