@@ -109,7 +109,11 @@ var Mento = (function() {
 		send : function(cmd, data) {
 			mentoWS.send(cmd, data);
 		},
-		
+
+		listen : function(cmd, callback) {
+			mentoWS.listen(cmd, callback);
+		},
+
 		openHandler : function(callback) {
 			mentoWS.listen('openQuestion', callback);
 		},

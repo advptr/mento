@@ -30,6 +30,18 @@ body {
 	<div class="control-group">
 		<input id="resetAll" type="button" class="btn btn-warning" value="Scratch database and start over" />
 	</div>
+	<div>
+		<div class="text-info">Questions, JSON format (max 4 options per question) 
+		<pre><code>[
+	{ "question": "Quiz question text (answer must be the correct one)", "options": [ "Yes", "No" ], "answer": 1 },
+	{ "question": "Vote text (answer shall be set to -1)", "options": [ "Yes", "No" ], "answer": 1 }
+]</code></pre>
+    		<textarea id="edit-questions" rows=25 cols=100 style="width: 99%;">xxxx</textarea>
+    		<br/>
+    		<input id="updateQuestions" type="button" class="btn btn-warning" value="Update database" />
+		</div>
+	</div>
+
 <script src='js/jquery.min.js'></script>
 <script src="js/bootstrap.min.js"></script>
 
@@ -40,34 +52,43 @@ body {
 <script src="js/mento.js"></script>
 
 <script type="text/javascript">
+
+	var render = function(data) {
+		$('#edit-questions').val(JSON.stringify(data, null, 4));
+		$('#questions').empty();
+		$.each(data, function(i, q) {
+			var tr = $('<tr>');
+			tr.append($('<td>').html(i + ': ' + q.question + '? ' + JSON.stringify(q.options)));
+			var btn = $('<input>').attr('type', 'button').attr('id', i);
+			if (q.answer > -1) {
+				btn.addClass('btn-success');
+				btn.attr('value', 'Launch Quiz');
+			} else {
+				btn.addClass('btn-primary');
+				btn.attr('value', 'Launch Vote');
+			}
+			btn.addClass((q.answer > -1) ? 'btn-success' : 'btn-primary');
+			tr.append($('<td>').append(btn));
+			$('#questions').append(tr);
+			btn.click(function(e) {
+				e.preventDefault();
+				console.log('open: ', btn.attr('id'));
+				var timeout = parseInt($('#time').val());
+				Store.set('timeout', timeout);
+				Mento.toQuestion({ num : parseInt(btn.attr('id')), timeout : timeout });
+				btn.remove();
+			});
+		});		
+	}
+
 	$(document).ready(function() {
 		Mento.ready();
-		Mento.questions(function(data) {
-			$.each(data, function(i, q) {
-				var tr = $('<tr>');
-				tr.append($('<td>').html(i + ': ' + q.question + '? ' + JSON.stringify(q.options)));
-				var btn = $('<input>').attr('type', 'button').attr('id', i);
-				if (q.answer > -1) {
-					btn.addClass('btn-success');
-					btn.attr('value', 'Launch Quiz');
-				} else {
-					btn.addClass('btn-primary');
-					btn.attr('value', 'Launch Vote');
-				}
-				btn.addClass((q.answer > -1) ? 'btn-success' : 'btn-primary');
-				tr.append($('<td>').append(btn));
-				$('#questions').append(tr);
-				btn.click(function(e) {
-					e.preventDefault();
-					console.log('open: ', btn.attr('id'));
-					var timeout = parseInt($('#time').val());
-					Store.set('timeout', timeout);
-					Mento.toQuestion({ num : parseInt(btn.attr('id')), timeout : timeout });
-					btn.remove();
-				});
-			});
+		Mento.questions(render);
+		Mento.listen('updateQuestions', function(data) {
+			$('#edit-questions').val(JSON.stringify(data, null, 4));
+			render(data);
 		});
-		
+	
 		$('#openWelcomePage').click(function(e) {
 			console.log('openWelcomePage');
 			e.preventDefault();
@@ -84,6 +105,15 @@ body {
 			e.preventDefault();
 			Mento.send('scratch');
 			window.location.reload();
+		});
+
+		$('#updateQuestions').click(function() {
+			try {
+				var questions = JSON.parse($('#edit-questions').val());
+				Mento.send('updateQuestions', questions);
+			} catch (err) {
+				alert(err);
+			}
 		});
 
 		var timeout = Store.get('timeout');

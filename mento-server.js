@@ -261,6 +261,24 @@ db.open(function(err) {
 			}
 		});
 
+		socket.on('updateQuestions', function(questions) {
+			console.log('updateQuestions');
+			db.cleanQuestions(function(err, name) {
+				console.log('cleaned', name);
+				if (err) {
+					console.log(err);
+				} else {
+	 				db.saveQuestions(questions, function(err, updated) {
+						if (!err) {
+							session.send('updateQuestions', updated);
+						} else {
+							console.log(err);
+						}
+					});
+ 				}
+			});
+		});
+
 		socket.on('questions', function() {
 			session.send('questions', Session.questions);
 		});
