@@ -102,7 +102,9 @@ db.open(function(err) {
 		}
 		Session.sessions.forEach(function(session) {
 			if (session.participant) {
-				session.participant.reset();
+				if (session.participant.reset !== undefined) {
+					session.participant.reset();
+				}
 			}
 		});
 		Session.round = new Round();

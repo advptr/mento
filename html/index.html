@@ -269,11 +269,12 @@
 					}
 					array.push([ option, count[i] ]);
 				});
-				
+
 				var chart = new google.visualization.PieChart(document.getElementById('chart'));
 				chart.draw(google.visualization.arrayToDataTable(array), {
 					chartArea : {left:10,top:0,width:"100%",height:"100%"},
 					is3D : true,
+					colors : [	'#396b9e', '#fadb4e', '#eeeeee', '#333333' ],
 					backgroundColor : { fill:'transparent' },
 					pieSliceText : 'value'
 				});				
@@ -298,6 +299,7 @@
 				});
 				
 				var dataArray = [];
+				var top = score[0].count;
 				dataArray.push(['Deltagare', 'Rätt']);
 				for (var n = 0; n < score.length && n < 10; n++) {
 					dataArray.push([score[n].name, score[n].count]);
@@ -307,7 +309,7 @@
 				chart.draw(google.visualization.arrayToDataTable(dataArray), {
 					backgroundColor : { "fill": 'transparent' },
 					vAxis: { title: 'Deltagare' },
-					hAxis: { title: 'Antal Rätt', format: '##', maxValue :  result.num, minValue : 0 }
+					hAxis: { title: 'Antal Rätt', format: '##', maxValue :  result.num, minValue : 0 },
 				});				
 
 				$('#question-type').html('Resultat');
