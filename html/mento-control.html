@@ -12,6 +12,9 @@ body {
 	padding: 10px;
 	background-color: lightgray;
 }
+.hide {
+	display: none;
+}
 </style>
 </head>
 
@@ -27,18 +30,22 @@ body {
 	<p class="text-info">Questions</p>
 	<table id="questions">
 	</table>
-	<div class="control-group">
-		<input id="resetAll" type="button" class="btn btn-warning" value="Scratch database and start over" />
-	</div>
-	<div>
-		<div class="text-info">Questions, JSON format (max 4 options per question) 
-		<pre><code>[
-	{ "question": "Quiz question text (answer must be the correct one)", "options": [ "Yes", "No" ], "answer": 1 },
-	{ "question": "Vote text (answer shall be set to -1)", "options": [ "Yes", "No" ], "answer": 1 }
-]</code></pre>
-    		<textarea id="edit-questions" rows=25 cols=100 style="width: 99%;">xxxx</textarea>
-    		<br/>
-    		<input id="updateQuestions" type="button" class="btn btn-warning" value="Update database" />
+	<input id="toggle-edit" type="button" class="btn btn-primary" value="+" />
+	<div id="edit-section" class="hide">
+		<hr/>
+		<div class="control-group">
+			<input id="resetAll" type="button" class="btn btn-warning" value="Scratch database and start over" />
+		</div>
+		<div>
+			<div class="text-info">Questions, JSON format (max 4 options per question) 
+			<pre><code>[
+		{ "question": "Quiz question text (answer must be the correct one)", "options": [ "Yes", "No" ], "answer": 1 },
+		{ "question": "Vote text (answer shall be set to -1)", "options": [ "Yes", "No" ], "answer": 1 }
+	]</code></pre>
+	    		<textarea id="edit-questions" rows=25 cols=100 style="width: 99%;">xxxx</textarea>
+	    		<br/>
+	    		<input id="updateQuestions" type="button" class="btn btn-warning" value="Update database" />
+			</div>
 		</div>
 	</div>
 
@@ -98,6 +105,15 @@ body {
 			console.log('openToplistPage');
 			e.preventDefault();
 			Mento.send('openToplistPage');
+		});
+		$('#toggle-edit').click(function(e) {
+			if ($('#edit-section').hasClass('hide')) {
+				$('#edit-section').removeClass('hide');
+				$('#toggle-edit').val('-');
+			} else {
+				$('#edit-section').addClass('hide');
+				$('#toggle-edit').val('+');
+			}
 		});
 
 		$('#resetAll').click(function(e) {
