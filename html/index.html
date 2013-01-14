@@ -312,14 +312,7 @@
 				$('#question-type').html('Top 10');
 				$('#question').airport([ list[result.winner].email ], function() {
 					$('#question-type').html('Vinnaren är');
-					$('#question').html(list[result.winner].email + '!!!').css({
-		                position: 'absolute',
-		                width: $(this).width() + 'px',
-		                height: $(this).height() + 'px',
-		                zIndex: -5000,
-		                top: ($(this).offset().top + 5) + 'px',
-		                left: ($(this).offset().left + 5) + 'px'
-		          });
+					$('#question').html(list[result.winner].email + '!!!');
 				});
 				$('#options').hide();
 				$('#welcome').hide();
