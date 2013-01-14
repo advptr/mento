@@ -87,16 +87,11 @@
 	</div>
 
 
-	<!-- Socket.IO-->
 	<script src="js/socket.io.min.js"></script>
 	<script src='js/wsocket.js'></script>
-
-	<script src="js/mento.js"></script>
-	<!--	<script src="js/bootstrap.min.js"></script> -->
-
-	<!--  JQuery -->
 	<script src='js/jquery.min.js'></script>
-	<script src="js/jquery.mobile.min.js"></script>
+	<script src="js/jquery.mobile.min.js"></script>	
+	<script src="js/mento.js"></script>
 	<script src="https://www.google.com/jsapi"></script>
 
 	<script type="text/javascript">
@@ -288,21 +283,23 @@
 			Mento.openToplistPage(function(result) {
 				$('#chart').empty();
 				
-				var score = [];
+				var list = result.participants;
 
-				$.each(result.participants, function(n, participant) {
-					score[n] = { name : participant.email, count : participant.correct };
-				});
-				
-				score.sort(function(a, b) {
-					return (a.count == b.count) ? 0 : (b.count - a.count);
-				});
-				
 				var dataArray = [];
-				var top = score[0].count;
+				var top = list[0].count;
 				dataArray.push(['Deltagare', 'Rätt']);
-				for (var n = 0; n < score.length && n < 10; n++) {
-					dataArray.push([score[n].name, score[n].count]);
+				var place = 0;
+				var name = $('#email').val();
+				for (var n = 0; n < list.length; n++) {
+					if (n < 10) {
+ 						dataArray.push([list[n].email, list[n].correct]);
+					}
+					if (list[n].email == name) {
+						place = n;
+						if (n >= 10) {
+							break;
+						}
+					}
 				}
 				
 				var chart = new google.visualization.BarChart(document.getElementById('chart'));
@@ -312,8 +309,18 @@
 					hAxis: { title: 'Antal Rätt', format: '##', maxValue :  result.num, minValue : 0 },
 				});				
 
-				$('#question-type').html('Resultat');
-				$('#question').text('Topp 10');
+				$('#question-type').html('Top 10');
+				$('#question').airport([ list[result.winner].email ], function() {
+					$('#question-type').html('Vinnaren är');
+					$('#question').html(list[result.winner].email + '!!!').css({
+		                position: 'absolute',
+		                width: $(this).width() + 'px',
+		                height: $(this).height() + 'px',
+		                zIndex: -5000,
+		                top: ($(this).offset().top + 5) + 'px',
+		                left: ($(this).offset().left + 5) + 'px'
+		          });
+				});
 				$('#options').hide();
 				$('#welcome').hide();
 				$('#quiz').show();

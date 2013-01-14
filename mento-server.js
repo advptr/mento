@@ -4,7 +4,13 @@ var root = '/html',
 	argv = require('optimist').usage('Usage: $0 --port [http_port]').default('port', 8080).argv,
 	app = express(),
 	Db = require('./lib/mongo-db'),
-	db = Db();
+	
+	db = Db('cadec-quiz-2013');
+
+
+process.on('uncaughtException', function (err) {
+  console.log('Ouch! uncaughtException', err);
+});
 
 db.open(function(err) {
 	if (err) {
@@ -12,7 +18,7 @@ db.open(function(err) {
 		return;
 	}
 	
-	console.log('connected to', db);
+	console.log('connected to db');
 
 	app.configure(function() {
 		app.use(express.favicon());
@@ -24,6 +30,7 @@ db.open(function(err) {
 	var server = http.createServer(app).listen(argv.port, function() {
 		console.log('Listening at: http://localhost:' + argv.port);
 	});
+
 
 	// Keeps track of (user) sessions
 	function Session(socket) {
@@ -59,15 +66,11 @@ db.open(function(err) {
 		this.answers = [];
 		this.question = null;
 
-		this.now = function() {
-			return new Date().getTime();
-		}
-
 		//
 		this.activate = function(id, timeout) {
 			this.id = id;
 			this.timeout = (timeout * 1000);
-			this.opened = this.now();
+			this.opened = Date.now();
 			this.question = Session.questions[this.id];
 			if (this.question.answer > -1) {
 				this.numQuiz++;
@@ -79,7 +82,7 @@ db.open(function(err) {
 
 		// timeout in seconds
 		this.getTimeout = function() {
-			var t = (this.timeout - (this.now() - this.opened));
+			var t = (this.timeout - (Date.now() - this.opened));
 			return Math.round(t / 1000);
 		}
 
@@ -92,7 +95,7 @@ db.open(function(err) {
 
 		//
 		this.isActive = function() {
-			return ((this.now() - this.opened) < this.timeout);
+			return ((Date.now() - this.opened) < this.timeout);
 		}
 	}
 
@@ -141,56 +144,62 @@ db.open(function(err) {
 				session.send(pageName, data);
 			}
 		});
-	}
+	};
 
 	var openQuestion = function(data) {
 		var num = data.num;
 		Session.round.activate(num, data.timeout);
 		openPage('openQuestion', { "question" : Session.round.question, "timeout" : data.timeout });
-	}
+	};
 
+	//
+	var getWinningSlot = function(sortedParticipants) {
+		var numFirst = 0;
+		sortedParticipants.forEach(function(participant) {
+			if (participant.correct == sortedParticipants[0].correct) {
+				numFirst++;
+			} else {
+				return;
+			}
+		});
+		return Math.floor(Math.random()*numFirst);		
+	};
 
 	// Listens on connections from clients
-	io.listen(server, { log: false }).on('connection', function (socket) {
+	io.listen(server, { log: false }).on('connection', function(socket) {
 
 		var session = new Session(socket);
 		Session.sessions.push(session);
 		session.send('ack');
-
-
 		console.log(socket.id, ' connected');
 
 		socket.on('disconnect', function() {
 			console.log('disconnected', session.participant);
 			Session.sessions.remove(session);
 			session.sendAll('users', Session.sessions.length);
-		});
-
-		socket.on('logout', function() {
+		}).on('logout', function() {
 			console.log('logout');
 			Session.sessions.remove(session);
 			session.sendAll('users', Session.sessions.length);
-		});
-
-		socket.on('openWelcomePage', function() {
+		}).on('openWelcomePage', function() {
 			openPage('openWelcomePage');
-		});
-
-		socket.on('openToplistPage', function() {
+		}).on('openToplistPage', function() {
 			db.findParticipants(function(err, participants) {
 				if (err) {
 					console.log(err);
 				} else {
-					openPage('openToplistPage', { participants : participants, num : Session.round.numQuiz });
+					// sort in descending order
+					participants.sort(function(a, b) {
+						return (a.correct == b.correct) ? 0 : (b.correct - a.correct);
+					});
+					var winner = getWinningSlot(participants);
+					console.log('winner', participants[winner]);
+					openPage('openToplistPage', { participants : participants, num : Session.round.numQuiz, winner : winner });
 				}
 			});
-		});
-
-		socket.on('openQuestion', function(data) {
+		}).on('openQuestion', function(data) {
 			openQuestion(data);		
-		});
-
-		socket.on('scratch', function(data) {
+		}).on('scratch', function(data) {
 			db.cleanParticipant(function(err) {
 				if (err) {
 					console.log('unexpected error', err);
@@ -200,9 +209,7 @@ db.open(function(err) {
 					console.log('Database scratched, new round!');
 				}
 			});
-		});
-
-		socket.on('email', function(email) {
+		}).on('email', function(email) {
 			console.log('email attempt: ', email);
 			// cannot connect if exists
 			Session.sessions.forEach(function(session) {
@@ -238,14 +245,10 @@ db.open(function(err) {
 					});
 				}
 			});
-		});
-
-		socket.on('results', function() {
+		}).on('results', function() {
 			var results = { question : Session.round.question, answers : Session.round.answers, score : { total : Session.round.numQuiz, correct : session.participant.correct } };
 			session.send('results', results);
-		});
-
-		socket.on('answer', function(data) {
+		}).on('answer', function(data) {
 			if (session.participant) {
 				var num = Session.round.id;
 				Session.round.addAnswer(data);
@@ -261,9 +264,7 @@ db.open(function(err) {
 					}
 				});
 			}
-		});
-
-		socket.on('updateQuestions', function(questions) {
+		}).on('updateQuestions', function(questions) {
 			console.log('updateQuestions');
 			db.cleanQuestions(function(err, name) {
 				console.log('cleaned', name);
@@ -279,9 +280,7 @@ db.open(function(err) {
 					});
  				}
 			});
-		});
-
-		socket.on('questions', function() {
+		}).on('questions', function() {
 			session.send('questions', Session.questions);
 		});
 	});
