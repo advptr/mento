@@ -267,13 +267,12 @@
 
 				var chart = new google.visualization.PieChart(document.getElementById('chart'));
 				chart.draw(google.visualization.arrayToDataTable(array), {
-					chartArea : {left:0,top:0,width:"100%",height:"100%"},
+					chartArea : {left:0, top:0, width:"90%", height:"100%"},
 					is3D : true,
 					colors : [	'#396b9e', '#fadb4e', '#eeeeee', '#333333' ],
 					backgroundColor : { fill:'transparent' },
 					pieSliceText : 'value',
-					pieSliceTextStyle : { color: 'orange'},
-					legend : { position: 'bottom' }
+					pieSliceTextStyle : { color: 'orange'}
 				});				
 
 				$('#options').hide();
