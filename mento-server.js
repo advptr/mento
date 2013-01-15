@@ -170,6 +170,8 @@ db.open(function(err) {
 		var session = new Session(socket);
 		Session.sessions.push(session);
 		session.send('ack');
+		session.sendAll('users', Session.sessions.length);
+
 		console.log(socket.id, ' connected');
 
 		socket.on('disconnect', function() {
@@ -234,7 +236,6 @@ db.open(function(err) {
 							if (Session.round.isActive()) {
 								session.send('openQuestion', { question : Session.round.question, timeout : Session.round.getTimeout() });
 							}
-							session.sendAll('users', Session.sessions.length);
 							console.log('saved', session.participant);
 							rc = true;
 						} else {
