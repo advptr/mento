@@ -27,7 +27,7 @@
             "EventEmitter",
             "Mongodb"
         ],
-        "answer": 2,
+        "answer": -1,
         "_id": "50e97bbdc277ebf510000005"
     },
     {
@@ -48,7 +48,7 @@
             "Twitter",
             "Yahoo!"
         ],
-        "answer": 3,
+        "answer": -1,
         "_id": "50f536250582bec01400003d"
     },
     {
@@ -59,7 +59,7 @@
             "Uncle Bob",
             "Yoda"
         ],
-        "answer": 1,
+        "answer": -1,
         "_id": "50ed6a2a801ccacd3d000009"
     },
     {
@@ -69,7 +69,7 @@
             "HashMap",
             "Buggfixar, kodfrys i morgon!"
         ],
-        "answer": 1,
+        "answer": -1,
         "_id": "50f51be50582bec014000034"
     },
     {
@@ -90,7 +90,7 @@
             "Infoga manuella steg",
             "Returnera parametrar"
         ],
-        "answer": 2,
+        "answer": -1,
         "_id": "50f51be50582bec014000035"
     },
     {
@@ -101,7 +101,7 @@
             "150",
             "750"
         ],
-        "answer": 1,
+        "answer": -1,
         "_id": "50e5a5188fe5b3ab48000005"
     },
     {
