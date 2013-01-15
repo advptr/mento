@@ -1,0 +1,7 @@
+Pitch:
+
+	* web-sockets jämfört med JSP (skalbarhet)
+	* netty
+
+Camtatia
+
