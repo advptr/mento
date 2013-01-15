@@ -219,7 +219,7 @@
 				$('#chart').hide();
 				$('#options').show();
 				$('#quiz').fadeIn(1000);
-				$('#countdown').show();
+				$('#countdown').html(pad(data.timeout)).show();
 
 				startProgress(data.timeout, function() {
 					// wait until all answers are ready to be displayed (1.5 seconds will do)
@@ -229,7 +229,7 @@
 					$('#countdown').hide();
 					$('#options').hide();
 				});
-				
+
 			});
 
 			Mento.connected(function() {
