@@ -65,7 +65,7 @@ body {
 		$('#questions').empty();
 		$.each(data, function(i, q) {
 			var tr = $('<tr>');
-			tr.append($('<td>').html(i + ': ' + q.question + '? ' + JSON.stringify(q.options)));
+			tr.append($('<td>').html(i + ': ' + q.question + '? <br/>' + JSON.stringify(q.options) +'<p/>'));
 			var btn = $('<input>').attr('type', 'button').attr('id', i);
 			if (q.answer > -1) {
 				btn.addClass('btn-success');
