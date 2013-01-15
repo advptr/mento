@@ -68,7 +68,7 @@ db.open(function(err) {
 		//
 		this.activate = function(id, timeout) {
 			this.id = id;
-			this.timeout = (timeout * 1000);
+			this.timeout = ((timeout+2) * 1000);
 			this.opened = Date.now();
 			this.question = Session.questions[this.id];
 			if (this.question.answer > -1) {
