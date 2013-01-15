@@ -1,10 +1,9 @@
-// globals
+//
 var root = '/html',
 	io = require('socket.io'), express = require('express'), http = require('http'),
 	argv = require('optimist').usage('Usage: $0 --port [http_port]').default('port', 8080).argv,
 	app = express(),
 	Db = require('./lib/mongo-db'),
-	
 	db = Db('cadec-quiz-2013');
 
 
@@ -147,12 +146,12 @@ db.open(function(err) {
 	};
 
 	var openQuestion = function(data) {
-		var num = data.num;
-		Session.round.activate(num, data.timeout);
+		Session.round.activate(data.num, data.timeout);
 		openPage('openQuestion', { "question" : Session.round.question, "timeout" : data.timeout });
 	};
 
-	//
+	// most correct answers wins
+	// use random algorithm to ensure one winner
 	var getWinningSlot = function(sortedParticipants) {
 		var numFirst = 0;
 		sortedParticipants.forEach(function(participant) {

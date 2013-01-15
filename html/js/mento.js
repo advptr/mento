@@ -7,23 +7,37 @@ var isEmpty = function(s) {
 	return (s == undefined) || (s == null) || (s == '');
 };
 
-var now = function() {
-	return new Date().getTime();
-};
-
 // HTML5 local store
 var Store = (function() {
+	var hasStorage = function() {
+		return (window.localStorage === undefined) ? false : true;
+	};
+	var altStore = [];
+
 	return {
-		set : function(name, value) { 
-			window.localStorage.setItem(name, value);
+		set : function(name, value) {
+			if (hasStorage()) {
+				window.localStorage.setItem(name, value);
+			} else {
+				altStore[name] = value; 
+			}
 		},
 
 		get : function(name) {
-			return window.localStorage.getItem(name);
+			if (hasStorage()) {
+				return window.localStorage.getItem(name);
+			} else {
+				var value = altStore[name];
+				return (value === undefined) ? null : value;
+			}
 		},
 
 		remove : function(name) {
-			window.localStorage.removeItem(name);	
+			if (hasStorage()) {
+				window.localStorage.removeItem(name);
+			} else {
+				altStore[name] = null;
+			}
 		},
 	};
 })();

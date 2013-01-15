@@ -133,10 +133,10 @@
 		// starts progress
 		var startProgress = function(timeout, readyCallback) {
 			var downtimer;
-			var start = now();
+			var start = Date.now();
 			var max = (timeout * 1000);
 			downtimer = setInterval(function() {
-				if ((now() - start) > max) {
+				if ((Date.now() - start) > max) {
 					readyCallback();
 					clearInterval(downtimer);
 				} else {
