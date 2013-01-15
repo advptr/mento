@@ -288,8 +288,6 @@
 
 			//
 			Mento.openToplistPage(function(result) {
-				$('#chart').empty();
-				
 				var list = result.participants;
 
 				var dataArray = [];
@@ -312,8 +310,7 @@
 				var chart = new google.visualization.BarChart(document.getElementById('chart'));
 				chart.draw(google.visualization.arrayToDataTable(dataArray), {
 					backgroundColor : { "fill": 'transparent' },
-					vAxis: { title: 'Deltagare' },
-					hAxis: { title: 'Antal Rätt', format: '##', maxValue :  result.num, minValue : 0 },
+                    hAxis: { format: '##', maxValue :  result.num, minValue : 0 }
 				});				
 
 				$('#question-type').html('Top 10');
