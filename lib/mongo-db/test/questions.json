@@ -1,8 +1,116 @@
 [
-	{ "question": "No är rätt", "options": [ "Yes", "No" ], "answer": 1 },
-	{ "question": "Yes är rätt", "options": [ "Yes", "No" ], "answer": 0  },
-	{ "question": "Vilken färg har java", "options": [ "Blå", "Röd", "Gul", "Grön" ], "answer": 0 },
-	{ "question": "Vad är det som gör Node.js så intressant", "options": [ "NIO", "JavaScript" ], "answer": 1 },
-	{ "question": "När postade Magnus L senaste blogginlägget", "options": [ "23/10", "24/10", "25/10" ], "answer": 1 }, 
-	{ "question": "Vem vinner presidentvalet i USA", "options": [ "Romney", "Obama" ], "answer": -1 }
+    {
+        "question": "Vilken typ av device har du",
+        "options": [
+            "iPhone/iOS",
+            "Android",
+            "Windows",
+            "Annan"
+        ],
+        "answer": -1,
+        "_id": "50f55c1b60a238471a000005"
+    },
+    {
+        "question": "Är detta din första CADEC",
+        "options": [
+            "Ja",
+            "Nej"
+        ],
+        "answer": -1,
+        "_id": "50e5a5188fe5b3ab48000006"
+    },
+    {
+        "question": "Vilken klass är fundamental för Node.js arkitektur",
+        "options": [
+            "Express",
+            "Cluster",
+            "EventEmitter",
+            "Mongodb"
+        ],
+        "answer": 2,
+        "_id": "50e97bbdc277ebf510000005"
+    },
+    {
+        "question": "Jag tycker Node.js verkar vara",
+        "options": [
+            "Totalt ointressant",
+            "Klart intressant",
+            "Ingen aning"
+        ],
+        "answer": -1,
+        "_id": "50f481560582bec01400001e"
+    },
+    {
+        "question": "Vilket företag driver Hadoop-utveklingen",
+        "options": [
+            "Facebook",
+            "Google",
+            "Twitter",
+            "Yahoo!"
+        ],
+        "answer": 3,
+        "_id": "50f536250582bec01400003d"
+    },
+    {
+        "question": "Vem myntade Code Kata",
+        "options": [
+            "Kent Beck",
+            "Dave Thomas",
+            "Uncle Bob",
+            "Yoda"
+        ],
+        "answer": 1,
+        "_id": "50ed6a2a801ccacd3d000009"
+    },
+    {
+        "question": "En kata kan vara att skriva",
+        "options": [
+            "Ansiktsigenkänningsprogram",
+            "HashMap",
+            "Buggfixar, kodfrys i morgon!"
+        ],
+        "answer": 1,
+        "_id": "50f51be50582bec014000034"
+    },
+    {
+        "question": "Tränar du på kodning",
+        "options": [
+            "Ja",
+            "Nej",
+            "Jag kan redan programmera"
+        ],
+        "answer": -1,
+        "_id": "50f51c330582bec014000036"
+    },
+    {
+        "question": "Build Flow plugin kan inte med byggen",
+        "options": [
+            "Skicka in parametrar",
+            "Vänta in parallela byggen",
+            "Infoga manuella steg",
+            "Returnera parametrar"
+        ],
+        "answer": 2,
+        "_id": "50f51be50582bec014000035"
+    },
+    {
+        "question": "Hur många rader kod kommer att krävas",
+        "options": [
+            "30",
+            "75",
+            "150",
+            "750"
+        ],
+        "answer": 1,
+        "_id": "50e5a5188fe5b3ab48000005"
+    },
+    {
+        "question": "Kommer Groovy & Grails att få större genomslag under 2013",
+        "options": [
+            "Ja, självklart",
+            "Nej"
+        ],
+        "answer": -1,
+        "_id": "50e864035f1d5f7668000001"
+    }
 ]
